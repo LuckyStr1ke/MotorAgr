@@ -5657,7 +5657,9 @@ begin
     F.ShowModal;
     Update;
     if F.ModalResult<>mrOk then Abort;
-//    result := f.Addr;
+
+    if f.fAddrIsn <> 0 then
+    ShowMessage('ok');
   finally
 
     F.Free;

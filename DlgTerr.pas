@@ -15,11 +15,15 @@ type
     frTerr1: TfrTerr;
     procedure FormShow(Sender: TObject);
     procedure frTerr1qAddrBeforePost(DataSet: TDataSet);
+    procedure btnOkClick(Sender: TObject);
   private
+
     { Private declarations }
   public
     { Public declarations }
     AgrIsn: Double;
+    fAddrIsn: Double;
+//    property AddrIsn: Double  read Getaddrisn write SetAddrIsn;
   end;
 
 var
@@ -42,6 +46,13 @@ procedure TfmDlgTerr.frTerr1qAddrBeforePost(DataSet: TDataSet);
 begin
   inherited;
   frTerr1.qAddrBeforePost(DataSet);
+end;
+
+
+procedure TfmDlgTerr.btnOkClick(Sender: TObject);
+begin
+  inherited;
+  fAddrIsn:= frTerr1.qAddrISN.AsFloat;
 end;
 
 end.

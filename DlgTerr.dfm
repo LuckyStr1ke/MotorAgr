@@ -31,7 +31,9 @@ inherited fmDlgTerr: TfmDlgTerr
       Height = 25
       Caption = 'OK'
       Default = True
+      ModalResult = 1
       TabOrder = 0
+      OnClick = btnOkClick
     end
     object btnCancel: TButton
       Left = 495

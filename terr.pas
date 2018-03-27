@@ -162,6 +162,8 @@ type
     procedure qrAddBeforeApplyUpdates(Sender: TObject;
       var OwnerData: OleVariant);
     procedure qAddrBeforePost(DataSet: TDataSet);
+    procedure edb_StreetBtnClick(Sender: TObject);
+    procedure sbFillAddrClick(Sender: TObject);
   private
     { Private declarations }
     fagrisn: double;
@@ -271,5 +273,37 @@ begin
    if qaddrisn.isnull then
   dataset['isn']:= TUConnection(qaddr.remoteserver).appserver.getnextisn('agraddr');
 end;
+
+
+//25/08/06 Угринович А.Н. - выбор улицы и заполнение поля адрес
+procedure TfrTerr.edb_StreetBtnClick(Sender: TObject);
+var
+ vSTREETISN :Double;
+ V :variant;
+begin
+
+   vSTREETISN := qaddrSTREETISN.asFloat;
+   V:=VarArrayOf([21, 'TfmStreetSrch', vSTREETISN,qAddrCITYISN.AsFloat,qAddrCITYName.AsString,
+                  qaddrSTREETNAME.asString, qAddrZIP.asString,  false
+                  ]);
+   (Owner as TBaseForm).GetIMain.AnyCall(V);
+   if not V[7]=true then Exit;  // признак того что нажали OK
+   if V[0]=NULL then begin ShowBDEError(Self, V[1]); Exit; end;
+   CheckDSEditMode(qaddr);
+   qAddrSTREETISN.AsFloat:=V[2];
+   qAddrCITYISN.AsFloat:=V[3];
+   qAddrCITYName.AsString:=V[4];
+   qAddrSTREETNAME.AsString:=V[5];
+   qAddrZIP.AsString:=V[6];
+
+end;
+
+procedure TfrTerr.sbFillAddrClick(Sender: TObject);
+begin
+ if not (qAddr.State in [dsEdit,dsInsert]) then qAddr.Edit;
+ qAddrremark1.asstring:=qAddrZip.asstring+' '+qAddrCityname.asstring +', '+qAddrstreetname.asstring+', '+qAddrHouse.asstring;
+
+end;
+
 
 end.

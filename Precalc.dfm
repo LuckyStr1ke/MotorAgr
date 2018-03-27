@@ -1220,7 +1220,8 @@ inherited fmPreCalc: TfmPreCalc
                   Expanded = False
                   FieldName = 'PARNAME'
                   Title.Caption = #1055#1072#1088#1072#1084#1077#1090#1088
-                  Visible = False
+                  Width = 63
+                  Visible = True
                 end
                 item
                   ButtonStyle = cbsEllipsis

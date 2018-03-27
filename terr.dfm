@@ -123,6 +123,7 @@ object frTerr: TfrTerr
         NumGlyphs = 2
         ParentShowHint = False
         ShowHint = True
+        OnClick = sbFillAddrClick
       end
       object Label6: TLabel
         Left = 398
@@ -224,6 +225,7 @@ object frTerr: TfrTerr
         TabOrder = 6
         ButtonCaption = '...'
         NumGlyphs = 1
+        OnBtnClick = edb_StreetBtnClick
       end
       object ed_House: TDBEdit
         Left = 264
