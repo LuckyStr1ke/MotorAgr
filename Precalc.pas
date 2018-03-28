@@ -678,7 +678,7 @@ type
     procedure VVHintHandler(Sender: TObject);
     procedure LaunchEstimateClient;
     function GetIntfCFSCall: ICFSCall;
-    procedure GetAgrAddr;
+    function GetAgrAddr(var AddrStr: string): Double;
     property IntfCFSCall : ICFSCall read GetIntfCFSCall write FCFSCall;
   protected
     function p_AGRPFIREKOMMERSANT: double ; // 2015-03-30 Конев В.А. Задача 73888985503 "Реализация продукта "Коммерсант".
@@ -2001,6 +2001,7 @@ var
   bm: Pointer;
   vCityISN: double;
   vCityName: WideString;
+  vAddrStr: string;
 
   const Msg2='#RUS Для ряда кузовов данной модели существует скидка за кузов по угону! ' + #10#13#10#13
      + 'Для того что бы скидка была учтена, необходимо задать "Модель кузова".';
@@ -2042,8 +2043,18 @@ begin
   then begin
     // 02.08.2017 Makarova task 153457217903
     if (DataSource.DataSet.FieldByName('ClassISN').AsFloat = 3652737903) then
-      GetAgrAddr;
-
+    begin
+      vISN := GetAgrAddr(vAddrStr);
+      if vISN <> -1 then
+      begin
+        CheckDSEditMode(DataSource.DataSet);
+        DataSource.DataSet.FieldByName('Val').AsString:=FloatToStr(vISN);
+        DataSource.DataSet.FieldByName('ValName').AsString:=vAddrStr;
+        DataSource.DataSet.Post;
+        Param_ApplyUpdates;
+      end;
+    end
+    else
     if (DataSource.DataSet.FieldByName('ClassISN').AsFloat =6678887503)  //тип нотариальной конторы по территории
     or (DataSource.DataSet.FieldByName('ClassISN').AsFloat =6678885203)  //нотариальная палата
     or (DataSource.DataSet.FieldByName('ClassISN').AsFloat =6678888803)  //вид деятельности
@@ -5547,11 +5558,23 @@ end;
 procedure TfmPreCalc.dbgTerrEditButtonClick(Sender: TObject);
 var
   pGrid: TDBGrid;
+  vISN: double;
+  vAddrStr: string;
 begin
   inherited;
   with TDbGrid(Sender) do begin
-    if (SelectedField = DataSource.DataSet.FieldByName('ValName'))
-     then GetAgrAddr;
+    if (SelectedField = DataSource.DataSet.FieldByName('ValName')) then
+    begin
+      vISN := GetAgrAddr(vAddrStr);
+      if vISN <> -1 then
+      begin
+        CheckDSEditMode(DataSource.DataSet);
+        DataSource.DataSet.FieldByName('Val').AsString:=FloatToStr(vISN);
+        DataSource.DataSet.FieldByName('ValName').AsString:=vAddrStr;
+        DataSource.DataSet.Post;
+        Param_ApplyUpdates;
+      end;
+    end;
      //ChooseWoodObj(cdsTerrCLASSISN, cdsTerrPARNAME, cdsTerrROOT.AsFloat);
   end;
 
@@ -5646,11 +5669,13 @@ begin
 end;
 }
 
-//function GetAgrAddr: float;
-procedure TfmPreCalc.GetAgrAddr;
+function TfmPreCalc.GetAgrAddr(var AddrStr: string): Double;
+//procedure TfmPreCalc.GetAgrAddr;
 var
  f: TfmDlgTerr;
+
 begin
+  result := -1;
   F:=TfmDlgTerr.CreateEx(Self, FIMain, FCon);
   try
     F.AgrISN:=qrPreCalcParam.FieldByName('AgrISN').AsFloat;
@@ -5659,7 +5684,12 @@ begin
     if F.ModalResult<>mrOk then Abort;
 
     if f.fAddrIsn <> 0 then
-    ShowMessage('ok');
+    begin
+      result := f.fAddrIsn;
+      AddrStr := f.vAddressStr;
+    end;  
+
+      //ShowMessage('ok');
   finally
 
     F.Free;

@@ -16,6 +16,10 @@ type
     procedure FormShow(Sender: TObject);
     procedure frTerr1qAddrBeforePost(DataSet: TDataSet);
     procedure btnOkClick(Sender: TObject);
+    procedure frTerr1qAddrNewRecord(DataSet: TDataSet);
+    procedure frTerr1qAddrBeforeApplyUpdates(Sender: TObject;
+      var OwnerData: OleVariant);
+
   private
 
     { Private declarations }
@@ -23,6 +27,7 @@ type
     { Public declarations }
     AgrIsn: Double;
     fAddrIsn: Double;
+    vAddressStr: string;
 //    property AddrIsn: Double  read Getaddrisn write SetAddrIsn;
   end;
 
@@ -52,7 +57,26 @@ end;
 procedure TfmDlgTerr.btnOkClick(Sender: TObject);
 begin
   inherited;
+  frTerr1.qAddr.Post;
+  if frTerr1.qAddr.ChangeCount > 0 then DSAfterPost(frTerr1.qAddr);
+  vAddressStr := frTerr1.DBMemo1.Lines.GetText;
   fAddrIsn:= frTerr1.qAddrISN.AsFloat;
+
+end;
+
+procedure TfmDlgTerr.frTerr1qAddrNewRecord(DataSet: TDataSet);
+begin
+  inherited;
+  frTerr1.qAddrNewRecord(DataSet);
+
+end;
+
+procedure TfmDlgTerr.frTerr1qAddrBeforeApplyUpdates(Sender: TObject;
+  var OwnerData: OleVariant);
+begin
+  inherited;
+  frTerr1.qAddrBeforeApplyUpdates(Sender, OwnerData);
+
 end;
 
 end.

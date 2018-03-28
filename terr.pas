@@ -21,9 +21,7 @@ type
  {* Форма отображения территории страхования в договоре }
   TfrTerr = class(TFrame)
     qAddr: TClientDataSet;
-    qAddrObj: TClientDataSet;
     dsAddr: TDataSource;
-    dsAddrObj: TDataSource;
     qAddrISN: TFloatField;
     qAddrCLASSISN: TFloatField;
     qAddrPLACEISN: TFloatField;
@@ -46,18 +44,6 @@ type
     qAddrCNAME: TStringField;
     qAddrCITYNAME: TStringField;
 	qAddrADDR: TStringField;
-    qAddrObjID: TStringField;
-    qAddrObjNAME: TStringField;
-    qAddrObjDATEBEG: TDateTimeField;
-    qAddrObjDATEEND: TDateTimeField;
-    qAddrObjISN2: TFloatField;
-    qAddrObjADDRISN: TFloatField;
-    qAddrObjINSUREDSUM: TFloatField;
-    qAddrObjLIMITSUM: TFloatField;
-    qAddrObjRCNT: TFloatField;
-    qAddrObjCODE: TStringField;
-    qAddrObjOBJISN: TFloatField;
-    qAddrObjSELECTION: TFloatField;
     qAddrSTREETISN: TFloatField;
     qAddrHOUSE: TStringField;
     qAddrSTREETNAME: TStringField;
@@ -70,25 +56,7 @@ type
 	qAddrcurrcombisn: TFloatField;
 	qAddrccurpml: TStringField;
 	qAddrccombpml: TStringField;
-	q_Coordinates: TClientDataSet;
-    q_CoordinatesISN: TFloatField;
-    q_CoordinatesOBJISN: TFloatField;
-    q_CoordinatesADDRISN: TFloatField;
-    q_CoordinatesORDERNO: TFloatField;
-    q_CoordinatesLATITUDE: TFloatField;
-    q_CoordinatesLONGITUDE: TFloatField;
-    q_CoordinatesALTITUDE: TFloatField;
-    q_CoordinatesLATITUDESTR: TStringField;
-    q_CoordinatesLONGITUDESTR: TStringField;
-    q_CoordinatesREMARK: TStringField;
-    q_CoordinatesUPDATED: TDateTimeField;
-    q_CoordinatesUPDATEDBYNAME: TStringField;
-    q_CoordinatesUPDATEDBY: TFloatField;
-    ds_Coordinates: TDataSource;
-    pmCoordinates: TPopupMenu;
-    pmCoordinatesImport: TMenuItem;
     OpenPictureDialog: TOpenPictureDialog;
-    pmCoordinatesShow: TMenuItem;
     pmTerr: TPopupMenu;
     mHistory: TMenuItem;
     mCopyTerr: TMenuItem;
@@ -105,32 +73,6 @@ type
     qAddrSELECTION: TFloatField;
     sBar: TStatusBar;
     edTaskIsn: TEdit;
-    qrAdd: TClientDataSet;
-    qrAddISN: TFloatField;
-    qrAddAGRISN: TFloatField;
-    qrAddPARENTISN: TFloatField;
-    qrAddID: TStringField;
-    qrAddDATEBEG: TDateTimeField;
-    qrAddDATEEND: TDateTimeField;
-    qrAddDATESIGN: TDateTimeField;
-    qrAddPREMIUMSUM: TFloatField;
-    qrAddRULEISN: TFloatField;
-    qrAddRULENAME: TStringField;
-    qrAddDATEISSUE: TDateTimeField;
-    qrAddSTATUS: TStringField;
-    qrAddFULLSTATUS: TStringField;
-    qrAddMONTHS: TStringField;
-    qrAddPREMSUMDELTA: TFloatField;
-    qrAddDISCR: TStringField;
-    qrAddNEXTADDISN: TFloatField;
-    qrAddEMPLISN: TFloatField;
-    qrAddEMPLNAME: TStringField;
-    qrAddCREATED: TDateTimeField;
-    qrAddREMARK: TMemoField;
-    qrAddDEPTISN: TFloatField;
-    qrAddNAME: TStringField;
-    qrAddINCOMEPREM: TFloatField;
-    dsAdd: TDataSource;
     Panel1: TPanel;
     JPanel1: TJPanel;
     Label1: TLabel;
@@ -304,6 +246,8 @@ begin
  qAddrremark1.asstring:=qAddrZip.asstring+' '+qAddrCityname.asstring +', '+qAddrstreetname.asstring+', '+qAddrHouse.asstring;
 
 end;
+
+
 
 
 end.

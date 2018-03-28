@@ -14,6 +14,7 @@ object frTerr: TfrTerr
         Text = #1042#1099#1076#1077#1083#1077#1085#1086': 0'
         Width = 100
       end>
+    Visible = False
     object edTaskIsn: TEdit
       Left = 274
       Top = 3
@@ -50,7 +51,7 @@ object frTerr: TfrTerr
       Align = alTop
       Alignment = taLeftJustify
       BevelOuter = bvNone
-      MinButton = True
+      MinButton = False
       MinCaption = '         '#1040#1076#1088#1077#1089
       MinOrientation = clVertical
       TabOrder = 0
@@ -418,149 +419,10 @@ object frTerr: TfrTerr
       FieldName = 'SELECTION'
     end
   end
-  object qAddrObj: TClientDataSet
-    Aggregates = <>
-    Params = <
-      item
-        DataType = ftCursor
-        Name = 'result'
-        ParamType = ptResult
-      end
-      item
-        DataType = ftFloat
-        Name = 'pagrisn'
-        ParamType = ptInput
-      end>
-    ProviderName = 'dspAddrObj'
-    BeforeGetRecords = qAddrBeforeApplyUpdates
-    Left = 656
-    Top = 128
-    object qAddrObjID: TStringField
-      FieldName = 'ID'
-    end
-    object qAddrObjNAME: TStringField
-      FieldName = 'NAME'
-      Size = 40
-    end
-    object qAddrObjDATEBEG: TDateTimeField
-      FieldName = 'DATEBEG'
-    end
-    object qAddrObjDATEEND: TDateTimeField
-      FieldName = 'DATEEND'
-    end
-    object qAddrObjISN2: TFloatField
-      FieldName = 'ISN'
-    end
-    object qAddrObjADDRISN: TFloatField
-      FieldName = 'ADDRISN'
-    end
-    object qAddrObjINSUREDSUM: TFloatField
-      FieldName = 'INSUREDSUM'
-      DisplayFormat = '#,##0.##'
-    end
-    object qAddrObjLIMITSUM: TFloatField
-      FieldName = 'LIMITSUM'
-      DisplayFormat = '#,##0.##'
-    end
-    object qAddrObjRCNT: TFloatField
-      FieldName = 'RCNT'
-    end
-    object qAddrObjCODE: TStringField
-      FieldName = 'CODE'
-      Size = 3
-    end
-    object qAddrObjOBJISN: TFloatField
-      FieldName = 'OBJISN'
-    end
-    object qAddrObjSELECTION: TFloatField
-      FieldKind = fkInternalCalc
-      FieldName = 'SELECTION'
-    end
-  end
   object dsAddr: TDataSource
     DataSet = qAddr
     Left = 480
     Top = 32
-  end
-  object dsAddrObj: TDataSource
-    DataSet = qAddrObj
-    Left = 712
-    Top = 88
-  end
-  object q_Coordinates: TClientDataSet
-    Aggregates = <>
-    Params = <
-      item
-        DataType = ftCursor
-        Name = 'RESULT'
-        ParamType = ptResult
-      end
-      item
-        DataType = ftFloat
-        Name = 'PADDRISN'
-        ParamType = ptInput
-      end>
-    ProviderName = 'dspObjCoordinate'
-    Left = 624
-    Top = 72
-    object q_CoordinatesISN: TFloatField
-      FieldName = 'ISN'
-    end
-    object q_CoordinatesOBJISN: TFloatField
-      FieldName = 'OBJISN'
-    end
-    object q_CoordinatesADDRISN: TFloatField
-      FieldName = 'ADDRISN'
-    end
-    object q_CoordinatesORDERNO: TFloatField
-      FieldName = 'ORDERNO'
-    end
-    object q_CoordinatesLATITUDE: TFloatField
-      FieldName = 'LATITUDE'
-    end
-    object q_CoordinatesLONGITUDE: TFloatField
-      FieldName = 'LONGITUDE'
-    end
-    object q_CoordinatesALTITUDE: TFloatField
-      FieldName = 'ALTITUDE'
-    end
-    object q_CoordinatesLATITUDESTR: TStringField
-      FieldName = 'LATITUDESTR'
-      Size = 255
-    end
-    object q_CoordinatesLONGITUDESTR: TStringField
-      FieldName = 'LONGITUDESTR'
-      Size = 255
-    end
-    object q_CoordinatesREMARK: TStringField
-      FieldName = 'REMARK'
-      Size = 255
-    end
-    object q_CoordinatesUPDATED: TDateTimeField
-      FieldName = 'UPDATED'
-    end
-    object q_CoordinatesUPDATEDBYNAME: TStringField
-      FieldName = 'UPDATEDBYNAME'
-      Size = 255
-    end
-    object q_CoordinatesUPDATEDBY: TFloatField
-      FieldName = 'UPDATEDBY'
-    end
-  end
-  object ds_Coordinates: TDataSource
-    DataSet = q_Coordinates
-    Left = 560
-    Top = 96
-  end
-  object pmCoordinates: TPopupMenu
-    Left = 480
-    Top = 91
-    object pmCoordinatesImport: TMenuItem
-      Caption = #1048#1084#1087#1086#1088#1090' '#1082#1086#1086#1088#1076#1080#1085#1072#1090' '#1080#1079' '#1092#1072#1081#1083#1072
-    end
-    object pmCoordinatesShow: TMenuItem
-      Caption = #1055#1086#1082#1072#1079#1072#1090#1100' '#1085#1072' '#1082#1072#1088#1090#1077
-    end
   end
   object OpenPictureDialog: TOpenPictureDialog
     Left = 416
@@ -606,127 +468,5 @@ object frTerr: TfrTerr
     object mUnselectAll: TMenuItem
       Caption = #1057#1085#1103#1090#1100' '#1074#1089#1077' '#1086#1090#1084#1077#1090#1082#1080
     end
-  end
-  object qrAdd: TClientDataSet
-    Aggregates = <>
-    Params = <
-      item
-        DataType = ftCursor
-        Name = 'Result'
-        ParamType = ptResult
-      end
-      item
-        DataType = ftFloat
-        Name = 'PAGRISN'
-        ParamType = ptInput
-      end
-      item
-        DataType = ftFloat
-        Name = 'PSHOWPREM'
-        ParamType = ptInput
-      end>
-    ProviderName = 'dspAdd2'
-    BeforeGetRecords = qrAddBeforeApplyUpdates
-    Left = 641
-    Top = 20
-    object qrAddISN: TFloatField
-      FieldName = 'ISN'
-    end
-    object qrAddAGRISN: TFloatField
-      FieldName = 'AGRISN'
-    end
-    object qrAddPARENTISN: TFloatField
-      FieldName = 'PARENTISN'
-    end
-    object qrAddID: TStringField
-      FieldName = 'ID'
-      Size = 10
-    end
-    object qrAddDATEBEG: TDateTimeField
-      FieldName = 'DATEBEG'
-      DisplayFormat = 'DD.MM.YY'
-      EditMask = '!99/99/00;1; '
-    end
-    object qrAddDATEEND: TDateTimeField
-      FieldName = 'DATEEND'
-      DisplayFormat = 'DD.MM.YY'
-      EditMask = '!99/99/00;1; '
-    end
-    object qrAddDATESIGN: TDateTimeField
-      FieldName = 'DATESIGN'
-      DisplayFormat = 'DD.MM.YY'
-      EditMask = '!99/99/00;1; '
-    end
-    object qrAddPREMIUMSUM: TFloatField
-      FieldName = 'PREMIUMSUM'
-      DisplayFormat = '#,##0.##'
-    end
-    object qrAddRULEISN: TFloatField
-      FieldName = 'RULEISN'
-    end
-    object qrAddRULENAME: TStringField
-      FieldName = 'RULENAME'
-      Size = 40
-    end
-    object qrAddDATEISSUE: TDateTimeField
-      FieldName = 'DATEISSUE'
-      DisplayFormat = 'DD.MM.YY'
-      EditMask = '!99/99/00;1; '
-    end
-    object qrAddSTATUS: TStringField
-      FieldName = 'STATUS'
-      Size = 1
-    end
-    object qrAddFULLSTATUS: TStringField
-      FieldName = 'FULLSTATUS'
-      Size = 40
-    end
-    object qrAddMONTHS: TStringField
-      FieldName = 'MONTHS'
-      Size = 30
-    end
-    object qrAddPREMSUMDELTA: TFloatField
-      FieldName = 'PREMSUMDELTA'
-      DisplayFormat = '+#,##0.##;-#,##0.##;0'
-    end
-    object qrAddDISCR: TStringField
-      FieldName = 'DISCR'
-      Size = 1
-    end
-    object qrAddNEXTADDISN: TFloatField
-      FieldName = 'NEXTADDISN'
-    end
-    object qrAddEMPLISN: TFloatField
-      FieldName = 'EMPLISN'
-    end
-    object qrAddEMPLNAME: TStringField
-      FieldName = 'EMPLNAME'
-      Size = 40
-    end
-    object qrAddCREATED: TDateTimeField
-      FieldName = 'CREATED'
-      DisplayFormat = 'DD.MM.YY HH:NN'
-    end
-    object qrAddREMARK: TMemoField
-      FieldName = 'REMARK'
-      BlobType = ftMemo
-      Size = 1000
-    end
-    object qrAddDEPTISN: TFloatField
-      FieldName = 'DEPTISN'
-    end
-    object qrAddNAME: TStringField
-      FieldName = 'NAME'
-      Size = 40
-    end
-    object qrAddINCOMEPREM: TFloatField
-      FieldName = 'INCOMEPREM'
-      DisplayFormat = '+#,##0.##;-#,##0.##;0'
-    end
-  end
-  object dsAdd: TDataSource
-    DataSet = qrAdd
-    Left = 698
-    Top = 28
   end
 end

@@ -66,6 +66,9 @@ inherited fmDlgTerr: TfmDlgTerr
     end
     inherited qAddr: TClientDataSet
       BeforePost = frTerr1qAddrBeforePost
+      OnNewRecord = frTerr1qAddrNewRecord
+      BeforeApplyUpdates = frTerr1qAddrBeforeApplyUpdates
+      BeforeGetRecords = frTerr1qAddrBeforeApplyUpdates
     end
   end
 end
