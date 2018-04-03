@@ -57,6 +57,7 @@ end;
 procedure TfmDlgTerr.btnOkClick(Sender: TObject);
 begin
   inherited;
+  frTerr1.sbFillAddrClick(Sender);
   frTerr1.qAddr.Post;
   if frTerr1.qAddr.ChangeCount > 0 then DSAfterPost(frTerr1.qAddr);
   vAddressStr := frTerr1.DBMemo1.Lines.GetText;

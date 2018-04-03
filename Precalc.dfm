@@ -1201,7 +1201,7 @@ inherited fmPreCalc: TfmPreCalc
               TitleFont.Name = 'MS Sans Serif'
               TitleFont.Style = []
               OnCellClick = dbgTerrCellClick
-              OnDrawColumnCell = g_CascoObjDrawColumnCell
+              OnDrawColumnCell = g_CascoDrawColumnCell
               OnDblClick = g_CascoDblClick
               OnEditButtonClick = dbgTerrEditButtonClick
               OnKeyDown = g_CascoKeyDown
@@ -1220,8 +1220,7 @@ inherited fmPreCalc: TfmPreCalc
                   Expanded = False
                   FieldName = 'PARNAME'
                   Title.Caption = #1055#1072#1088#1072#1084#1077#1090#1088
-                  Width = 63
-                  Visible = True
+                  Visible = False
                 end
                 item
                   ButtonStyle = cbsEllipsis

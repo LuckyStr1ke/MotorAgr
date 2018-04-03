@@ -938,6 +938,8 @@ const p_TRF_CL_Period      : double=761854100;
       TP_TRIPPERIOD:double = 3522424103;
       TP_CADASTRALVALUE:      double = 6173720203;
       tp_FranchCond:          double = 4139434503;
+      tp_CTERYINSNAME:        double = 7442491403;
+      TP_CTERYINSURANCE:      double = 3652737903;
 
       //17.10.2017 Makarova task 170085988203
       Tp_InsSpecProgram : double = 6711117803;
@@ -1778,6 +1780,20 @@ begin
   ShowGridColumn(g_Casco1, 'Updated', vIsMaket, 80,'Время изменения');
   ShowGridColumn(g_Casco1, 'UpdatedBy', vIsMaket, 80,'Автор изменения');
 
+
+   // только для макета
+  ShowGridColumn(dbgTerr, 'ParName', CanAddInvisibleField, 20);
+  ShowGridColumn(dbgTerr, 'VisField', CanAddInvisibleField, 20);
+  ShowGridColumn(dbgTerr, 'NO', vIsMaket, 30);
+  ShowGridColumn(dbgTerr, 'GROUPID', vIsMaket, 30,'Группа');
+  ShowGridColumn(dbgTerr, 'CLASSISN', vIsMaket, 80,'ClassISN');
+  ShowGridColumn(dbgTerr, 'VAL', vIsMaket, 80,'Значение');
+
+  ShowGridColumn(dbgTerr, 'Created', vIsMaket, 80,'Время создания');
+  ShowGridColumn(dbgTerr, 'CreatedBy', vIsMaket, 80,'Автор создания');
+  ShowGridColumn(dbgTerr, 'Updated', vIsMaket, 80,'Время изменения');
+  ShowGridColumn(dbgTerr, 'UpdatedBy', vIsMaket, 80,'Автор изменения');
+
   // в макете можно добавлять и удалять параметры
   if vIsMaket then begin
     cbMode.ItemIndex := 1;
@@ -1921,13 +1937,28 @@ begin
   jpKotDKB.Minimize:=not vIsKotDKB;
   pCascoObj.Visible:=not vIsKotDKB;
 
-{  if vIsKotDKB then begin
-//    cbMode.ItemIndex := 1;
+  if vIsKotDKB then begin
+
+    Panel6.Visible := false;
+    Panel8.Visible := false;
+    tbnConvertCalc.Visible := False;
+    tbnCopyCalc.Visible := false;
+    cbMode.Visible := false;
+    label11.Visible := false;
+    edRuleName.Visible := false;
+    Panel10.Caption := 'Объекты страхования';
+
+
+    cbMode.ItemIndex := 1;
 
     qrPreCalcParam1.BeforeInsert:=nil;
     qrPreCalcParam1.BeforeDelete:=DSBeforeDelete;
+
+    g_Casco1.Columns[GetColIndex(g_Casco1, 'PARNAME')].ReadOnly := false;
+    g_Casco1.Columns[GetColIndex(g_Casco1, 'PARNAME')].ButtonStyle := cbsEllipsis;
+
   end;
- }
+
   fonFormShow:=False;
 //  FillPreCalcGroupMenu;
 end;
@@ -2042,7 +2073,7 @@ begin
            or (TDbGrid(Sender).DataSource.DataSet.FieldByName('DataType').AsString='WM'))
   then begin
     // 02.08.2017 Makarova task 153457217903
-    if (DataSource.DataSet.FieldByName('ClassISN').AsFloat = 3652737903) then
+    if (DataSource.DataSet.FieldByName('ClassISN').AsFloat = TP_CTERYINSURANCE) then
     begin
       vISN := GetAgrAddr(vAddrStr);
       if vISN <> -1 then
@@ -3253,7 +3284,7 @@ begin
   if ((DataSet = cdsTerr) and (FGroupID = -10)) then
   begin
     DataSet.FieldByName('DataType').AsString := 'W';
-    DataSet.FieldByName('CLASSISN').AsFloat :=  3652737903;
+    DataSet.FieldByName('CLASSISN').AsFloat :=  TP_CTERYINSURANCE;
     DataSet.FieldByName('Root').AsFloat :=  3653032203;
     cdsTerr.Post;
     cdsTerr.ApplyUpdates(0);
@@ -4503,8 +4534,12 @@ begin
 
   if vIsKotDKB then
   begin
-    aObjIsn := cdsTerr.FieldByName('Isn').AsFloat;
-    if cdsTerr.FieldByName('ValName').AsString = 'Территория страхования №1' then
+    if cdsTerr.FieldByName('ClassISN').AsFloat = tp_CTERYINSNAME then
+      aObjIsn := cdsTerr.FieldByName('ParentISN').AsFloat
+    else
+      aObjIsn := cdsTerr.FieldByName('Isn').AsFloat;
+
+    if (cdsTerr.FieldByName('ValName').AsString = '') and (cdsTerr.FieldByName('ClassISN').AsFloat = TP_CTERYINSURANCE) then
       filterStr := ' and ParentIsn is null'
     else
       filterStr := ' and ParentIsn = '+FloatToStr(aObjIsn);
@@ -4533,7 +4568,7 @@ begin
 //   cdsTerr.Filter := 'GROUPID = -10 and VisField = 1';
   end;
   if ((fMulti or vIsKotDKB) and (aObjIsn<>0) and (qrPreCalcHeadRuleISN.AsFloat <> p_AGRMOTORWIZARD)) then
-    qrPreCalcPrem.Filter := 'ParentIsn='+FloatToStr(aObjIsn);
+    qrPreCalcPrem.Filter := 'ParsentIsn='+FloatToStr(aObjIsn);
 end;
 
 procedure TfmPreCalc.g_CascoObjMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
@@ -5696,5 +5731,10 @@ begin
   end;
 
 end;
+{
+procedure
+begin
+
+end;}
 end.
 
