@@ -1101,6 +1101,7 @@ inherited fmPreCalc: TfmPreCalc
               Ctl3D = True
               DataSource = dsAgrAdd
               ParentCtl3D = False
+              PopupMenu = pmCopyMenu
               TabOrder = 0
               TitleFont.Charset = RUSSIAN_CHARSET
               TitleFont.Color = clWindowText
@@ -1146,6 +1147,7 @@ inherited fmPreCalc: TfmPreCalc
               Height = 457
               Align = alClient
               DataSource = dsVariant
+              PopupMenu = pmCopyMenu
               TabOrder = 0
               TitleFont.Charset = RUSSIAN_CHARSET
               TitleFont.Color = clWindowText
@@ -1194,6 +1196,7 @@ inherited fmPreCalc: TfmPreCalc
               DataSource = dsTerr
               Options = [dgEditing, dgAlwaysShowEditor, dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgConfirmDelete, dgCancelOnExit]
               ParentCtl3D = False
+              PopupMenu = pmCopyMenu
               TabOrder = 0
               TitleFont.Charset = RUSSIAN_CHARSET
               TitleFont.Color = clWindowText
@@ -2727,6 +2730,10 @@ inherited fmPreCalc: TfmPreCalc
       DisplayWidth = 10
       FieldName = 'Sort1'
     end
+    object qrPreCalcPremParentISN: TFloatField
+      DisplayWidth = 10
+      FieldName = 'ParentIsn'
+    end
   end
   object qrPreCalcParam: TClientDataSetN
     Aggregates = <>
@@ -3951,7 +3958,7 @@ inherited fmPreCalc: TfmPreCalc
   end
   object cdsTerr: TClientDataSet
     Aggregates = <>
-    Filter = 'GROUPID=-10 and VisField=1'
+    Filter = '(GROUPID <= -10 and GROUPID >= -11) and VisField=1'
     Filtered = True
     Params = <
       item
@@ -4147,5 +4154,28 @@ inherited fmPreCalc: TfmPreCalc
   object pmPreCalcGroup: TPopupMenu
     Left = 759
     Top = 329
+  end
+  object pmCopyMenu: TPopupMenu
+    OnPopup = pmCopyMenuPopup
+    Left = 51
+    Top = 377
+    object miCopyAs: TMenuItem
+      Caption = #1050#1086#1087#1080#1088#1086#1074#1072#1090#1100' '#1082#1072#1082
+      object miCopyAsPreCalc: TMenuItem
+        Caption = #1050#1086#1090#1080#1088#1086#1074#1082#1091
+      end
+      object miCopyAsAdd: TMenuItem
+        Caption = #1040#1076#1076#1077#1085#1076#1091#1084
+      end
+      object miCopyAsVar: TMenuItem
+        Caption = #1042#1077#1088#1089#1080#1102
+      end
+      object miCopyAsTerr: TMenuItem
+        Caption = #1058#1077#1088#1088#1080#1090#1086#1088#1080#1102
+      end
+    end
+    object miCopyAll: TMenuItem
+      Caption = #1050#1086#1087#1080#1088#1086#1074#1072#1090#1100
+    end
   end
 end

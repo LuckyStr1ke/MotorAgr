@@ -493,6 +493,10 @@ type
     odsVariant: TOracleDataSet;
     odsTerr: TOracleDataSet;
     spLoadXMLDataToCalc: TOracleQuery;
+    qrAddrNew: TOracleDataSet;
+    dspAddrNew: TDataSetProvider;
+    spAddrNew: TOracleQuery;
+
 //
 //
     procedure dspCarAfterApplyUpdates(Sender: TObject;

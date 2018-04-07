@@ -448,7 +448,13 @@ type
     cdsTerrPARENTISN: TFloatField;
     qrPreCalcParamList: TClientDataSet;
     pmPreCalcGroup: TPopupMenu;
-
+    pmCopyMenu: TPopupMenu;
+    miCopyAs: TMenuItem;
+    miCopyAsPreCalc: TMenuItem;
+    miCopyAsAdd: TMenuItem;
+    miCopyAsVar: TMenuItem;
+    miCopyAll: TMenuItem;
+    miCopyAsTerr: TMenuItem;
     procedure qrGetRulTariffTxtBeforeGetRecords(Sender: TObject;
       var OwnerData: OleVariant);
     procedure edCarCtgValNameBtnClick(Sender: TObject);
@@ -586,6 +592,8 @@ type
     procedure dsVariantDataChange(Sender: TObject; Field: TField);
     procedure dbgTerrCellClick(Column: TColumn);    
     procedure FillPreCalcGroupMenu;
+    procedure InsertObjects(Sender: TObject);
+    procedure pmCopyMenuPopup(Sender: TObject);
 //    procedure miDelGroupClickWithParent(Sender: TObject);
   private
     // Lavrov S.V. task #9069873803 07.04.2009
@@ -621,7 +629,8 @@ type
     fTerrInsert : Boolean;
 
     vIsKotDKB: boolean;
-
+    vIsMaket :boolean;
+    
     fonFormShow:Boolean;
 
     StateChange: Boolean;
@@ -961,6 +970,7 @@ const p_TRF_CL_Period      : double=761854100;
       Tp_ContractAgrPrice:    double = 6708840303;
       Tp_YearlyTurnover:      double = 6708845303;
       TP_TYPE_ESTATE:         double = 3624713803;
+      TP_INSOBJECTS_PARENT:   double = 3654640603;
 var
   fmPreCalc: TfmPreCalc;
   MyRec: PMyRec;
@@ -1607,7 +1617,6 @@ end;
 
 procedure TfmPreCalc.FormShow(Sender: TObject);
 var
- vIsMaket :boolean;
  i :integer;
  V : Variant;      
  T: TFloatField;
@@ -1835,9 +1844,12 @@ begin
     g_Casco.Columns[GetColIndex(g_Casco, 'PARNAME')].ReadOnly := true;
     g_Casco.Columns[GetColIndex(g_Casco, 'PARNAME')].ButtonStyle := cbsNone;
 
-    g_Casco1.Columns[GetColIndex(g_Casco1, 'PARNAME')].ReadOnly := true;
-    g_Casco1.Columns[GetColIndex(g_Casco1, 'PARNAME')].ButtonStyle := cbsNone;
-
+    if not vIsKotDKB then
+    begin
+      g_Casco1.Columns[GetColIndex(g_Casco1, 'PARNAME')].ReadOnly := true;
+      g_Casco1.Columns[GetColIndex(g_Casco1, 'PARNAME')].ButtonStyle := cbsNone;
+    end;
+    
     g_CascoObj.Columns[GetColIndex(g_CascoObj, 'PARNAME')].ReadOnly := true;
     g_CascoObj.Columns[GetColIndex(g_CascoObj, 'PARNAME')].ButtonStyle := cbsNone;
 
@@ -1940,22 +1952,37 @@ begin
   if vIsKotDKB then begin
 
     Panel6.Visible := false;
-    Panel8.Visible := false;
+//    Panel8.Visible := false;
+    edAgrID.Visible := false;
+    edAgrStatus.Visible := false;
+    edClientFullName.Visible := false;
+    edClientReplyName.Visible := false;
+    edClientSource.Visible := false;
+
+    Label10.Visible := false;
+    lbClientsSource.Visible := false;
+    Label14.Visible := false;
+    Label20.Visible := false;
+    Label12.Visible := false;
+    lVariantValuation.Visible := false;
+
     tbnConvertCalc.Visible := False;
     tbnCopyCalc.Visible := false;
     cbMode.Visible := false;
+    Label6.Left := Label1.Left;
+    edEmplName.Left := edRuleName.Left;
+    chbGTotal.Left := edEmplName.Left + edEmplName.Width;
     label11.Visible := false;
     edRuleName.Visible := false;
     Panel10.Caption := 'Объекты страхования';
-
 
     cbMode.ItemIndex := 1;
 
     qrPreCalcParam1.BeforeInsert:=nil;
     qrPreCalcParam1.BeforeDelete:=DSBeforeDelete;
 
-    g_Casco1.Columns[GetColIndex(g_Casco1, 'PARNAME')].ReadOnly := false;
-    g_Casco1.Columns[GetColIndex(g_Casco1, 'PARNAME')].ButtonStyle := cbsEllipsis;
+{    g_Casco1.Columns[GetColIndex(g_Casco1, 'PARNAME')].ReadOnly := false;
+    g_Casco1.Columns[GetColIndex(g_Casco1, 'PARNAME')].ButtonStyle := cbsEllipsis;}
 
   end;
 
@@ -2045,7 +2072,12 @@ begin
   with TDbGrid(Sender) do begin
     // Параметры
     if (SelectedField = DataSource.DataSet.FieldByName('ParName')) then
-      ChooseWood(DataSource.DataSet.FieldByName('ClassISN'), DataSource.DataSet.FieldByName('ParName'), p_TPrmStruct);
+      if vIsKotDKB
+      //and (not vIsMaket) //временно
+      and (Name = 'g_Casco1') then
+        InsertObjects(Sender)
+      else
+        ChooseWood(DataSource.DataSet.FieldByName('ClassISN'), DataSource.DataSet.FieldByName('ParName'), p_TPrmStruct);
   // Значения
   //Дата
   if (SelectedField = DataSource.DataSet.FieldByName('ValName'))
@@ -2072,7 +2104,7 @@ begin
       and ((TDbGrid(Sender).DataSource.DataSet.FieldByName('DataType').AsString='W')
            or (TDbGrid(Sender).DataSource.DataSet.FieldByName('DataType').AsString='WM'))
   then begin
-    // 02.08.2017 Makarova task 153457217903
+    //alpatov
     if (DataSource.DataSet.FieldByName('ClassISN').AsFloat = TP_CTERYINSURANCE) then
     begin
       vISN := GetAgrAddr(vAddrStr);
@@ -2086,6 +2118,7 @@ begin
       end;
     end
     else
+    // 02.08.2017 Makarova task 153457217903
     if (DataSource.DataSet.FieldByName('ClassISN').AsFloat =6678887503)  //тип нотариальной конторы по территории
     or (DataSource.DataSet.FieldByName('ClassISN').AsFloat =6678885203)  //нотариальная палата
     or (DataSource.DataSet.FieldByName('ClassISN').AsFloat =6678888803)  //вид деятельности
@@ -2603,6 +2636,7 @@ begin
       PPComp:=TDbGrid(Sender);
       pmAllowValue.Popup(P.X, P.Y);
     end;
+
   end;
 end;
 
@@ -2824,6 +2858,11 @@ begin
       end;
       if (DataSource.DataSet.FieldByName('DataType').AsString='S') then
         Columns[GetColIndex(vGrid, 'VALNAME')].ReadOnly := False;
+      if (DataSource.DataSet.FieldByName('DataType').AsString = '') and vIsKotDKB and (vGrid = g_Casco1) then
+      begin
+        Columns[GetColIndex(vGrid, 'PARNAME')].ButtonStyle := cbsEllipsis;
+        Columns[GetColIndex(vGrid, 'PARNAME')].ReadOnly    := false;
+      end;
     end;
   end;
 end;
@@ -3256,9 +3295,12 @@ begin
   g_CascoObj.Columns[GetColIndex(g_CascoObj, 'PARNAME')].ButtonStyle := cbsEllipsis;
   fObjInsert:=True;
 
-  dbgTerr.Columns[GetColIndex(dbgTerr, 'VALNAME')].ReadOnly := false;
-  dbgTerr.Columns[GetColIndex(dbgTerr, 'VALNAME')].ButtonStyle := cbsEllipsis;
-  fTerrInsert := True;
+  if dbgTerr.DataSource.DataSet.FieldByName('ClassISN').AsFloat = TP_CTERYINSURANCE then
+  begin
+    dbgTerr.Columns[GetColIndex(dbgTerr, 'VALNAME')].ReadOnly := false;
+    dbgTerr.Columns[GetColIndex(dbgTerr, 'VALNAME')].ButtonStyle := cbsEllipsis;
+    fTerrInsert := True;
+  end;
 
 end;
 end;
@@ -4112,12 +4154,23 @@ begin
   SetPopupMenuForField(TDbGrid(Sender));
   with pGrid do
   begin
-   if (SelectedField.FieldName = 'VisField') or ((qrPreCalcHeadStatus.AsString <> 'М') and
-       ((SelectedField.FieldName = 'PARNAME') or ((SelectedField.FieldName = 'VALNAME') and (DataSource.DataSet.FieldByName('IsReadOnly').AsFloat = 1))))
-   then
-     Options:=Options-[dgEditing]
-   else
-     Options:=Options+[dgEditing];
+    if not vIsKotDKB then
+    begin
+      if (SelectedField.FieldName = 'VisField') or ((qrPreCalcHeadStatus.AsString <> 'М') and
+         ((SelectedField.FieldName = 'PARNAME') or ((SelectedField.FieldName = 'VALNAME') and (DataSource.DataSet.FieldByName('IsReadOnly').AsFloat = 1))))
+       then
+         Options:=Options-[dgEditing]
+       else
+         Options:=Options+[dgEditing];
+    end
+    else
+    if ((SelectedField.FieldName = 'PARNAME') and (SelectedField.FieldByName('Val').AsString = '' ))
+    or (SelectedField.FieldName = 'VALNAME') then
+    begin
+       Options:=Options+[dgEditing];
+       Columns[GetColIndex(g_Casco1, 'PARNAME')].ButtonStyle := cbsEllipsis;
+       Columns[GetColIndex(g_Casco1, 'PARNAME')].ReadOnly := false;
+    end;
   end;
 end;
 
@@ -4534,15 +4587,26 @@ begin
 
   if vIsKotDKB then
   begin
+ {   if cdsTerr.FieldByName('ClassISN').AsFloat = tp_CTERYINSNAME then
+      if cdsTerr.FieldByName('ParentISN').AsString = '' then
+        filterStr := ' and ParentIsn is null'
+      else
+//        filterStr := ' and ParentIsn = ' + cdsTerr.FieldByName('ParentISN').AsString
+        aObjIsn := cdsTerr.FieldByName('ParentISN').AsFloat
+    else if cdsTerr.FieldByName('ClassISN').AsFloat = TP_CTERYINSURANCE then
+      if (cdsTerr.FieldByName('ValName').AsString = '') then
+        filterStr := ' and ParentIsn is null'
+      else
+//        filterStr := ' and ParentIsn = ' +  cdsTerr.FieldByName('ISN').AsString;
+        aObjIsn := cdsTerr.FieldByName('ParentISN').AsFloat;
+                 }
     if cdsTerr.FieldByName('ClassISN').AsFloat = tp_CTERYINSNAME then
       aObjIsn := cdsTerr.FieldByName('ParentISN').AsFloat
-    else
-      aObjIsn := cdsTerr.FieldByName('Isn').AsFloat;
+    else if cdsTerr.FieldByName('ClassISN').AsFloat = TP_CTERYINSURANCE then
+      aObjIsn := cdsTerr.FieldByName('ParentISN').AsFloat;
 
-    if (cdsTerr.FieldByName('ValName').AsString = '') and (cdsTerr.FieldByName('ClassISN').AsFloat = TP_CTERYINSURANCE) then
-      filterStr := ' and ParentIsn is null'
-    else
-      filterStr := ' and ParentIsn = '+FloatToStr(aObjIsn);
+    if aObjIsn <> 0 then
+      FilterStr := ' and ParentISN = ' +FloatToStr(aObjIsn);
   end
   else
   begin
@@ -4568,7 +4632,7 @@ begin
 //   cdsTerr.Filter := 'GROUPID = -10 and VisField = 1';
   end;
   if ((fMulti or vIsKotDKB) and (aObjIsn<>0) and (qrPreCalcHeadRuleISN.AsFloat <> p_AGRMOTORWIZARD)) then
-    qrPreCalcPrem.Filter := 'ParsentIsn='+FloatToStr(aObjIsn);
+    qrPreCalcPrem.Filter := 'ParentIsn='+FloatToStr(aObjIsn);
 end;
 
 procedure TfmPreCalc.g_CascoObjMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
@@ -5731,10 +5795,69 @@ begin
   end;
 
 end;
-{
-procedure
-begin
 
-end;}
+procedure  TfmPreCalc.InsertObjects(Sender: TObject);
+var
+  V: Variant;
+  pISN, vISN:  double;
+  i,j: Integer;
+begin
+  with TDbGrid(Sender) do
+  begin
+    PISN := TP_INSOBJECTS_PARENT;
+    vISN := 0;
+
+    if (FIMain.Wood2(PISN, vISN, 0, V, false, false, true, '', TRUE, TRUE)) then begin
+   // Если Multi=TRUE - Формат: V[i]=[ISN, ShortName, ParentISN, Code, FullName, ParentShortName, AddISN]
+             // Если Multi=FALSE - Формат: V[i]=[ShortName, Code, ParentISN, ParentShortName]
+      i:=VarArrayHighBound(V, 1);
+      for j:=0 to i do begin
+        CheckDSEditMode(DataSource.DataSet);
+        if j>0 then
+        DataSource.DataSet.Insert;
+        DataSource.DataSet.FieldByName('ClassISN').AsString:=V[j][0];
+        DataSource.DataSet.FieldByName('No').AsFloat := 0; 
+//        DataSource.DataSet.FieldByName('ValName').AsString:=V[j][4];
+        DataSource.DataSet.Post;
+        Param_ApplyUpdates;
+      end;
+    end;
+  end;
+end;
+
+
+procedure TfmPreCalc.pmCopyMenuPopup(Sender: TObject);
+
+begin
+  inherited;
+
+  with TDBGrid((Sender as TPopupMenu).PopupComponent) do
+  begin
+    if Name = 'dbgDogAdd' then
+    begin
+        miCopyAll.Visible := True;
+        miCopyAs.Visible := false;
+    end;
+    if Name = 'dbgVariant' then
+    begin
+        miCopyAs.Visible := True;
+        miCopyAll.Visible := false;
+        miCopyAsAdd.Visible := True;
+        miCopyAsPrecalc.Visible := True;
+        miCopyAsVar.Visible := True;
+        miCopyAsTerr.Visible := false;
+    end;
+        if Name = 'dbgTerr' then
+    begin
+        miCopyAs.Visible := True;
+        miCopyAll.Visible := false;
+        miCopyAsAdd.Visible := True;
+        miCopyAsPrecalc.Visible := True;
+        miCopyAsVar.Visible := True;
+        miCopyAsTerr.Visible := true;
+    end;
+  end;
+end;
+
 end.
 
