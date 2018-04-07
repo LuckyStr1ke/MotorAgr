@@ -448,6 +448,13 @@ type
     cdsTerrPARENTISN: TFloatField;
     qrPreCalcParamList: TClientDataSet;
     pmPreCalcGroup: TPopupMenu;
+    pmCopyMenu: TPopupMenu;
+    miCopyAs: TMenuItem;
+    miCopyAsPreCalc: TMenuItem;
+    miCopyAsAdd: TMenuItem;
+    miCopyAsVar: TMenuItem;
+    miCopyAll: TMenuItem;
+    miCopyAsTerr: TMenuItem;
 
     procedure qrGetRulTariffTxtBeforeGetRecords(Sender: TObject;
       var OwnerData: OleVariant);
@@ -586,6 +593,8 @@ type
     procedure dsVariantDataChange(Sender: TObject; Field: TField);
     procedure dbgTerrCellClick(Column: TColumn);    
     procedure FillPreCalcGroupMenu;
+    procedure InsertObjects(Sender: TObject);
+    procedure pmCopyMenuPopup(Sender: TObject);
 //    procedure miDelGroupClickWithParent(Sender: TObject);
   private
     // Lavrov S.V. task #9069873803 07.04.2009
@@ -961,6 +970,7 @@ const p_TRF_CL_Period      : double=761854100;
       Tp_ContractAgrPrice:    double = 6708840303;
       Tp_YearlyTurnover:      double = 6708845303;
       TP_TYPE_ESTATE:         double = 3624713803;
+      TP_INSOBJECTS_PARENT:   double = 3654640603;
 var
   fmPreCalc: TfmPreCalc;
   MyRec: PMyRec;
@@ -1940,14 +1950,29 @@ begin
   if vIsKotDKB then begin
 
     Panel6.Visible := false;
-    Panel8.Visible := false;
+//    Panel8.Visible := false;
+    edAgrID.Visible := false;
+    edAgrStatus.Visible := false;
+    edClientFullName.Visible := false;
+    edClientReplyName.Visible := false;
+    edClientSource.Visible := false;
+
+    Label10.Visible := false;
+    lbClientsSource.Visible := false;
+    Label14.Visible := false;
+    Label20.Visible := false;
+    Label12.Visible := false;
+    lVariantValuation.Visible := false;
+
     tbnConvertCalc.Visible := False;
     tbnCopyCalc.Visible := false;
     cbMode.Visible := false;
+    Label6.Left := Label1.Left;
+    edEmplName.Left := edRuleName.Left;
+    chbGTotal.Left := edEmplName.Left + edEmplName.Width;
     label11.Visible := false;
     edRuleName.Visible := false;
     Panel10.Caption := 'Объекты страхования';
-
 
     cbMode.ItemIndex := 1;
 
@@ -2072,7 +2097,8 @@ begin
       and ((TDbGrid(Sender).DataSource.DataSet.FieldByName('DataType').AsString='W')
            or (TDbGrid(Sender).DataSource.DataSet.FieldByName('DataType').AsString='WM'))
   then begin
-    // 02.08.2017 Makarova task 153457217903
+    //alpatov
+    if vIsKotDKB and (Name = 'g_Casco1') then InsertObjects(Sender);
     if (DataSource.DataSet.FieldByName('ClassISN').AsFloat = TP_CTERYINSURANCE) then
     begin
       vISN := GetAgrAddr(vAddrStr);
@@ -2086,6 +2112,7 @@ begin
       end;
     end
     else
+    // 02.08.2017 Makarova task 153457217903
     if (DataSource.DataSet.FieldByName('ClassISN').AsFloat =6678887503)  //тип нотариальной конторы по территории
     or (DataSource.DataSet.FieldByName('ClassISN').AsFloat =6678885203)  //нотариальная палата
     or (DataSource.DataSet.FieldByName('ClassISN').AsFloat =6678888803)  //вид деятельности
@@ -4567,8 +4594,8 @@ begin
    qrPreCalcParamObj.Filter := 'GROUPID =-1 and VisField = 1';
 //   cdsTerr.Filter := 'GROUPID = -10 and VisField = 1';
   end;
-  if ((fMulti or vIsKotDKB) and (aObjIsn<>0) and (qrPreCalcHeadRuleISN.AsFloat <> p_AGRMOTORWIZARD)) then
-    qrPreCalcPrem.Filter := 'ParsentIsn='+FloatToStr(aObjIsn);
+{  if ((fMulti or vIsKotDKB) and (aObjIsn<>0) and (qrPreCalcHeadRuleISN.AsFloat <> p_AGRMOTORWIZARD)) then
+    qrPreCalcPrem.Filter := 'ParsentIsn='+FloatToStr(aObjIsn);}
 end;
 
 procedure TfmPreCalc.g_CascoObjMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
@@ -5731,10 +5758,66 @@ begin
   end;
 
 end;
-{
-procedure
-begin
 
-end;}
+procedure  TfmPreCalc.InsertObjects(Sender: TObject);
+var
+  V: Variant;
+  pISN, vISN:  double;
+  i,j: Integer;
+begin
+  with TDbGrid(Sender) do
+  begin
+    PISN := TP_INSOBJECTS_PARENT;
+    vISN := 0;
+
+    if (FIMain.Wood2(PISN, vISN, 0, V, false, false, true, '', TRUE, TRUE)) then begin
+   // Если Multi=TRUE - Формат: V[i]=[ISN, ShortName, ParentISN, Code, FullName, ParentShortName, AddISN]
+             // Если Multi=FALSE - Формат: V[i]=[ShortName, Code, ParentISN, ParentShortName]
+      i:=VarArrayHighBound(V, 1);
+      for j:=0 to i do begin
+        CheckDSEditMode(DataSource.DataSet);
+        DataSource.DataSet.FieldByName('Val').AsString:=V[j][0];
+        DataSource.DataSet.FieldByName('ValName').AsString:=V[j][4];
+        DataSource.DataSet.Post;
+        Param_ApplyUpdates;
+      end;
+    end;
+  end;
+end;
+
+
+procedure TfmPreCalc.pmCopyMenuPopup(Sender: TObject);
+
+begin
+  inherited;
+
+  with TDBGrid((Sender as TPopupMenu).PopupComponent) do
+  begin
+    if Name = 'dbgDogAdd' then
+    begin
+        miCopyAll.Visible := True;
+        miCopyAs.Visible := false;
+    end;
+    if Name = 'dbgVariant' then
+    begin
+        miCopyAs.Visible := True;
+        miCopyAll.Visible := false;
+        miCopyAsAdd.Visible := True;
+        miCopyAsPrecalc.Visible := True;
+        miCopyAsVar.Visible := True;
+        miCopyAsTerr.Visible := false;
+    end;
+        if Name = 'dbgTerr' then
+    begin
+        miCopyAs.Visible := True;
+        miCopyAll.Visible := false;
+        miCopyAsAdd.Visible := True;
+        miCopyAsPrecalc.Visible := True;
+        miCopyAsVar.Visible := True;
+        miCopyAsTerr.Visible := true;
+    end;
+  end;
+end;
+
 end.
 

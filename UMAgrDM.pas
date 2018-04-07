@@ -489,8 +489,8 @@ type
     dspAgrAdd: TDataSetProvider;
     dspVariant: TDataSetProvider;
     dspTerr: TDataSetProvider;
-    odsAgrAdd: TOracleDataSet;
-    odsVariant: TOracleDataSet;
+    qrAgrAdd: TOracleDataSet;
+    qrVariant: TOracleDataSet;
     odsTerr: TOracleDataSet;
     spLoadXMLDataToCalc: TOracleQuery;
 //

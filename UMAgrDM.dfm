@@ -7233,12 +7233,12 @@ inherited MAgrDM: TMAgrDM
     Top = 351
   end
   object dspAgrAdd: TDataSetProvider
-    DataSet = odsAgrAdd
+    DataSet = qrAgrAdd
     Left = 1320
     Top = 240
   end
   object dspVariant: TDataSetProvider
-    DataSet = odsVariant
+    DataSet = qrVariant
     Left = 1376
     Top = 240
   end
@@ -7247,27 +7247,29 @@ inherited MAgrDM: TMAgrDM
     Left = 1320
     Top = 296
   end
-  object odsAgrAdd: TOracleDataSet
+  object qrAgrAdd: TOracleDataSet
     SQL.Strings = (
       'select '#39#1044#39' dog, ID, ISN from Agreement where ISN=:XISN'
       'UNION'
-      'SELECT '#39#1040#1076#1076' '#39'||A.NO dog,  ID, A.ISN '
+      'SELECT '#39#1040#1076#1076' '#39'||rownum/*A.NO*/ dog,  ID, A.ISN '
       'FROM Agreement A, Agrlink L'
       
         'WHERE  A.ISN=L.AGRISN2 and L.CLASSISN=6943015103/*'#1076#1086#1075#1086#1074#1086#1088'-'#1072#1076#1076#1077#1085#1076 +
-        #1091#1084'*/  and L.AGRISN1=:XISN')
+        #1091#1084'*/  and L.AGRISN1=:XISN'
+      'order by 2')
     Optimize = False
     Session = OraSession
     Left = 1320
     Top = 352
   end
-  object odsVariant: TOracleDataSet
+  object qrVariant: TOracleDataSet
     SQL.Strings = (
-      'SELECT A.ID, A.ISN '
+      'SELECT '#39#1042' '#39'|| rownum/*A.ID*/ ID, A.ISN '
       'FROM Agreement A, Agrlink L'
       
         'WHERE  A.ISN=L.AGRISN2 and L.CLASSISN=6943015603/*'#1076#1086#1075#1086#1074#1086#1088'-'#1074#1072#1088#1080#1072#1085 +
-        #1090'*/  and L.AGRISN1=:XISN')
+        #1090'*/  and L.AGRISN1=:XISN'
+      'order by 2')
     Optimize = False
     Session = OraSession
     Left = 1384
