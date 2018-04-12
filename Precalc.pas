@@ -404,7 +404,7 @@ type
     qrPreCalcHeadIsFire: TFloatField;
     jpKotDKB: TJPanel;
     cdsAgrAdd: TClientDataSet;
-    cdsVariant: TClientDataSet;
+    qrVariant: TClientDataSet;
     cdsTerr: TClientDataSet;
     dsTerr: TDataSource;
     dsVariant: TDataSource;
@@ -455,7 +455,15 @@ type
     miCopyAsVar: TMenuItem;
     miCopyAll: TMenuItem;
     miCopyAsTerr: TMenuItem;
-
+    qrVariantISN: TFloatField;
+    qrVariantID: TStringField;
+    cdsCreateVariant: TClientDataSet;
+    cdsCreateAdd: TClientDataSet;
+    cdsDeleteAgrAdd: TClientDataSet;
+    cdsDeleteVariant: TClientDataSet;
+    cdsCopyVariant: TClientDataSet;
+    cdsCopyAgrAdd: TClientDataSet;
+    cdsCopyTerr: TClientDataSet;
     procedure qrGetRulTariffTxtBeforeGetRecords(Sender: TObject;
       var OwnerData: OleVariant);
     procedure edCarCtgValNameBtnClick(Sender: TObject);
@@ -595,6 +603,28 @@ type
     procedure FillPreCalcGroupMenu;
     procedure InsertObjects(Sender: TObject);
     procedure pmCopyMenuPopup(Sender: TObject);
+    procedure dbgVariantColEnter(Sender: TObject);
+    procedure dbgVariantCellClick(Column: TColumn);
+    procedure cdsTerrBeforeGetRecords(Sender: TObject;
+      var OwnerData: OleVariant);
+    procedure qrVariantBeforeInsert(DataSet: TDataSet);
+    procedure dbgTerrColEnter(Sender: TObject);
+    procedure qrVariantBeforeApplyUpdates(Sender: TObject;
+      var OwnerData: OleVariant);
+    procedure qrVariantAfterInsert(DataSet: TDataSet);
+    procedure cdsAgrAddBeforeGetRecords(Sender: TObject;
+      var OwnerData: OleVariant);
+    procedure qrVariantAfterApplyUpdates(Sender: TObject;
+      var OwnerData: OleVariant);
+    procedure cdsCreateVariantBeforeGetRecords(Sender: TObject;
+      var OwnerData: OleVariant);
+    procedure qrVariantNewRecord(DataSet: TDataSet);
+    procedure cdsAgrAddNewRecord(DataSet: TDataSet);
+    procedure cdsAgrAddAfterDelete(DataSet: TDataSet);
+    procedure qrVariantAfterDelete(DataSet: TDataSet);
+    procedure DeleteLinkRec(pName: String);
+    procedure cdsAgrAddBeforeDelete(DataSet: TDataSet);
+    procedure miCopyAllClick(Sender: TObject);
 //    procedure miDelGroupClickWithParent(Sender: TObject);
   private
     // Lavrov S.V. task #9069873803 07.04.2009
@@ -630,7 +660,8 @@ type
     fTerrInsert : Boolean;
 
     vIsKotDKB: boolean;
-
+    vIsMaket :boolean;
+    
     fonFormShow:Boolean;
 
     StateChange: Boolean;
@@ -1617,7 +1648,6 @@ end;
 
 procedure TfmPreCalc.FormShow(Sender: TObject);
 var
- vIsMaket :boolean;
  i :integer;
  V : Variant;      
  T: TFloatField;
@@ -1845,9 +1875,12 @@ begin
     g_Casco.Columns[GetColIndex(g_Casco, 'PARNAME')].ReadOnly := true;
     g_Casco.Columns[GetColIndex(g_Casco, 'PARNAME')].ButtonStyle := cbsNone;
 
-    g_Casco1.Columns[GetColIndex(g_Casco1, 'PARNAME')].ReadOnly := true;
-    g_Casco1.Columns[GetColIndex(g_Casco1, 'PARNAME')].ButtonStyle := cbsNone;
-
+    if not vIsKotDKB then
+    begin
+      g_Casco1.Columns[GetColIndex(g_Casco1, 'PARNAME')].ReadOnly := true;
+      g_Casco1.Columns[GetColIndex(g_Casco1, 'PARNAME')].ButtonStyle := cbsNone;
+    end;
+    
     g_CascoObj.Columns[GetColIndex(g_CascoObj, 'PARNAME')].ReadOnly := true;
     g_CascoObj.Columns[GetColIndex(g_CascoObj, 'PARNAME')].ButtonStyle := cbsNone;
 
@@ -1979,8 +2012,13 @@ begin
     qrPreCalcParam1.BeforeInsert:=nil;
     qrPreCalcParam1.BeforeDelete:=DSBeforeDelete;
 
-    g_Casco1.Columns[GetColIndex(g_Casco1, 'PARNAME')].ReadOnly := false;
-    g_Casco1.Columns[GetColIndex(g_Casco1, 'PARNAME')].ButtonStyle := cbsEllipsis;
+    qrVariant.BeforeInsert:=nil;
+    qrVariant.BeforeDelete:=DSBeforeDelete;
+
+    Panel8.Height := Panel8.Height - edAgrID.Height - Label12.Height - 4;
+
+{    g_Casco1.Columns[GetColIndex(g_Casco1, 'PARNAME')].ReadOnly := false;
+    g_Casco1.Columns[GetColIndex(g_Casco1, 'PARNAME')].ButtonStyle := cbsEllipsis;}
 
   end;
 
@@ -2031,7 +2069,11 @@ procedure TfmPreCalc.qrPreCalcParamBeforeGetRecords(Sender: TObject;
   var OwnerData: OleVariant);
 begin
   inherited;
-  OwnerData:=VarArrayOf([User.ISN, User.SLabel, qrPreCalcHeadISN.AsFloat])
+ // OwnerData:=VarArrayOf([User.ISN, User.SLabel, qrPreCalcHeadISN.AsFloat])
+  if qrVariant.Active then
+    OwnerData:=VarArrayOf([User.ISN, User.SLabel, qrVariant.FieldByName('ISN').AsFloat])
+  else
+    OwnerData:=VarArrayOf([User.ISN, User.SLabel, qrPreCalcHeadISN.AsFloat]);
 end;
 
 
@@ -2070,7 +2112,12 @@ begin
   with TDbGrid(Sender) do begin
     // Параметры
     if (SelectedField = DataSource.DataSet.FieldByName('ParName')) then
-      ChooseWood(DataSource.DataSet.FieldByName('ClassISN'), DataSource.DataSet.FieldByName('ParName'), p_TPrmStruct);
+      if vIsKotDKB
+      //and (not vIsMaket) //временно
+      and (Name = 'g_Casco1') then
+        InsertObjects(Sender)
+      else
+        ChooseWood(DataSource.DataSet.FieldByName('ClassISN'), DataSource.DataSet.FieldByName('ParName'), p_TPrmStruct);
   // Значения
   //Дата
   if (SelectedField = DataSource.DataSet.FieldByName('ValName'))
@@ -2098,7 +2145,6 @@ begin
            or (TDbGrid(Sender).DataSource.DataSet.FieldByName('DataType').AsString='WM'))
   then begin
     //alpatov
-    if vIsKotDKB and (Name = 'g_Casco1') then InsertObjects(Sender);
     if (DataSource.DataSet.FieldByName('ClassISN').AsFloat = TP_CTERYINSURANCE) then
     begin
       vISN := GetAgrAddr(vAddrStr);
@@ -2630,6 +2676,7 @@ begin
       PPComp:=TDbGrid(Sender);
       pmAllowValue.Popup(P.X, P.Y);
     end;
+
   end;
 end;
 
@@ -2851,6 +2898,13 @@ begin
       end;
       if (DataSource.DataSet.FieldByName('DataType').AsString='S') then
         Columns[GetColIndex(vGrid, 'VALNAME')].ReadOnly := False;
+      if (DataSource.DataSet.FieldByName('DataType').AsString = '') and vIsKotDKB and (vGrid = g_Casco1) then
+      begin
+        Columns[GetColIndex(vGrid, 'PARNAME')].ButtonStyle := cbsEllipsis;
+        Columns[GetColIndex(vGrid, 'PARNAME')].ReadOnly    := false;
+      end;
+      if vIsKotDKB and (vGrid = dbgTerr) then
+        dbgTerrColEnter(dbgTerr);
     end;
   end;
 end;
@@ -3091,18 +3145,14 @@ const
   VALUE_WIDTH_PROPORTION = 3; // 1/3 от ширины
 var
   iNameWidth    : integer;
-  iFirstLeft: integer;
 begin
   inherited;
   if vIsKotDKB then begin
    // pCascoObj.Width:=((pnMotor.ClientWidth - Splitter1.Width - SplitterObj.Width-jpKotDKB.Width) div 11)*3;
-    pCasco.Width:=(pnMotor.ClientWidth - Splitter1.Width - jpKotDKB.Width) div 2;   
-{    iFirstLeft := pCasco.Left;
-    pCasco.Left := pCasco1.Left - 1;
-    pCasco1.Left := pCasco.ClientWidth + iFirstLeft;
     pCasco.Align := alClient;
     pCasco1.Align := alLeft;
-    надо будет поменять местами}
+
+    pCasco1.Width:=(pnMotor.ClientWidth - Splitter1.Width - jpKotDKB.Width-Splitter2.Width) div 2;
 
     end else// exit;
   // равномерное расширение гридов
@@ -3132,7 +3182,7 @@ begin
                 (g_Casco1.ClientWidth - GetSystemMetrics(SM_CXVSCROLL)) div VALUE_WIDTH_PROPORTION;
 
   g_Casco1.Columns[GetColIndex(g_Casco1, 'PARNAME')].Width := iNameWidth - 10 - IIF(CanAddInvisibleField, 20, 0);;
-  g_Casco1.Columns[GetColIndex(g_Casco1, 'VALNAME')].Width := g_Casco1.ClientWidth - GetSystemMetrics(SM_CXVSCROLL) - iNameWidth;
+  g_Casco1.Columns[GetColIndex(g_Casco1, 'VALNAME')].Width := g_Casco1.ClientWidth - GetSystemMetrics(SM_CXVSCROLL) - iNameWidth + 5;
 
   dbgTerr.Columns[0].Width := dbgTerr.Width-3;
   dbgVariant.Columns[0].Width := dbgVariant.Width-3;
@@ -3283,10 +3333,18 @@ begin
   g_CascoObj.Columns[GetColIndex(g_CascoObj, 'PARNAME')].ButtonStyle := cbsEllipsis;
   fObjInsert:=True;
 
-  dbgTerr.Columns[GetColIndex(dbgTerr, 'VALNAME')].ReadOnly := false;
-  dbgTerr.Columns[GetColIndex(dbgTerr, 'VALNAME')].ButtonStyle := cbsEllipsis;
-  fTerrInsert := True;
-
+  if dbgTerr.DataSource.DataSet.FieldByName('ClassISN').AsFloat = TP_CTERYINSURANCE then
+  begin
+    dbgTerr.Columns[GetColIndex(dbgTerr, 'VALNAME')].ReadOnly := false;
+    dbgTerr.Columns[GetColIndex(dbgTerr, 'VALNAME')].ButtonStyle := cbsEllipsis;
+    fTerrInsert := True;
+  end
+  else
+  begin
+    dbgTerr.Columns[GetColIndex(dbgTerr, 'VALNAME')].ReadOnly := true;
+    dbgTerr.Columns[GetColIndex(dbgTerr, 'VALNAME')].ButtonStyle := cbsNone;
+    fTerrInsert := false;
+  end;
 end;
 end;
 
@@ -3312,7 +3370,11 @@ begin
   begin
     DataSet.FieldByName('DataType').AsString := 'W';
     DataSet.FieldByName('CLASSISN').AsFloat :=  TP_CTERYINSURANCE;
-    DataSet.FieldByName('Root').AsFloat :=  3653032203;
+//    DataSet.FieldByName('Root').AsFloat :=  3653032203;
+    if qrVariant.Active then
+      DataSet.FieldByName('AgrIsn').AsFloat :=  qrVariant.FieldByName('ISN').AsFloat
+    else
+      DataSet.FieldByName('AgrIsn').AsFloat :=  qrPreCalcHeadISN.AsFloat;
     cdsTerr.Post;
     cdsTerr.ApplyUpdates(0);
     QueryRefresh(qrPreCalcParam);
@@ -3676,6 +3738,10 @@ begin
     QueryRefresh(cdsTerr);
   end;
 
+  if(qrVariant.Active) then begin
+    CheckDSBrowseMode(qrVariant);
+    QueryRefresh(qrVariant);
+  end;
 end;
 
 procedure TfmPreCalc.qrPreCalcHeadClientReplyNameSetText(Sender: TField;
@@ -3799,12 +3865,18 @@ begin
 
   if not (Button=nbDelete) then inherited;
 
+
   if (Button=nbDelete) then
    with (Sender as TDBNavigator) do
     begin
-     if not(ConfirmDelete) then DataSource.DataSet.Delete
+     if not(ConfirmDelete) then
+     begin
+        DeleteLinkRec(DataSource.DataSet.Name);
+        DataSource.DataSet.Delete;
+     end
       else
        if MsgBoxYN(MsgDR)=IDYES then begin
+         DeleteLinkRec(DataSource.DataSet.Name);
          Update;
          DataSource.DataSet.Delete;
        end;
@@ -3818,8 +3890,11 @@ begin
      if DS.FieldByName('CLASSISN').Value = tp_FranchCond then
         if DS.FieldByName('VALNAME').Value <> DS.FieldByName('VALNAME').OldValue then DS.Next;
    if (DS=qrPreCalcParam) or (DS=qrPreCalcParam1) or (DS=qrPreCalcParamObj) or (DS = cdsTerr) then
-    begin DSAfterPost(DS); SysUtils.Abort; end;
-  end; 
+//    or (DS = cdsAgrAdd) or (DS=qrVariant) then
+    begin DSAfterPost(DS); SysUtils.Abort; end;{
+   else if  (DS = cdsAgrAdd) then
+    begin DeleteLinkRec('cdsAgrAdd'); DSAfterPost(DS); end;}
+  end;
 end;
 
 // AL 18/06/07 сохранение изменений на сервере
@@ -3829,6 +3904,7 @@ begin
  if qrPreCalcParam1.ChangeCount>0 then DSAfterPost(qrPreCalcParam1);
  if qrPreCalcParamObj.ChangeCount>0 then DSAfterPost(qrPreCalcParamObj);
  if cdsTerr.ChangeCount>0 then DSAfterPost(cdsTerr);
+ if qrVariant.ChangeCount>0 then DSAfterPost(qrVariant);
 
 
   // Dmitry_Popov/EPAM 20070801 Задача #3962483403 не происходит POST DataSet-а котировки ОСАГО
@@ -4094,7 +4170,7 @@ end;
 procedure TfmPreCalc.CheckCalcTestAccess;
 begin
   cbTestCalc.Checked:=false;
-  cbTestCalc.Visible:=false;
+  cbTestCalc.Visible:=true;//false;
 
   cbTestCalc.Visible:=ProtectFuncAccess('Agr.Calc.Test');
   ControlsCalcTest;
@@ -4139,12 +4215,30 @@ begin
   SetPopupMenuForField(TDbGrid(Sender));
   with pGrid do
   begin
-   if (SelectedField.FieldName = 'VisField') or ((qrPreCalcHeadStatus.AsString <> 'М') and
-       ((SelectedField.FieldName = 'PARNAME') or ((SelectedField.FieldName = 'VALNAME') and (DataSource.DataSet.FieldByName('IsReadOnly').AsFloat = 1))))
-   then
-     Options:=Options-[dgEditing]
-   else
-     Options:=Options+[dgEditing];
+    if not vIsKotDKB then
+    begin
+      if (SelectedField.FieldName = 'VisField') or ((qrPreCalcHeadStatus.AsString <> 'М') and
+         ((SelectedField.FieldName = 'PARNAME') or ((SelectedField.FieldName = 'VALNAME') and (DataSource.DataSet.FieldByName('IsReadOnly').AsFloat = 1))))
+       then
+         Options:=Options-[dgEditing]
+       else
+         Options:=Options+[dgEditing];
+    end
+    else
+    if ((SelectedField.FieldName = 'PARNAME') and (DataSource.DataSet.FieldByName('Val').AsString = '' ))
+    or (SelectedField.FieldName = 'VALNAME') then
+    begin
+       Options:=Options+[dgEditing];
+       Columns[GetColIndex(g_Casco1, 'PARNAME')].ButtonStyle := cbsEllipsis;
+       Columns[GetColIndex(g_Casco1, 'PARNAME')].ReadOnly := false;
+    end
+    else
+    begin
+       Options:=Options-[dgEditing];
+       Columns[GetColIndex(g_Casco1, 'PARNAME')].ButtonStyle := cbsNone;
+       Columns[GetColIndex(g_Casco1, 'PARNAME')].ReadOnly := true;
+    end;
+
   end;
 end;
 
@@ -4250,6 +4344,7 @@ begin
       CheckDSBrowseMode(qrPreCalcParam1);
       CheckDSBrowseMode(qrPreCalcParamObj);
       CheckDSBrowseMode(cdsTerr);
+      CheckDSBrowseMode(qrVariant);
       Param_ApplyUpdates;
       QueryRefresh(qrPreCalcParam);
       QueryRefresh(qrPreCalcParam1);
@@ -4561,15 +4656,26 @@ begin
 
   if vIsKotDKB then
   begin
+ {   if cdsTerr.FieldByName('ClassISN').AsFloat = tp_CTERYINSNAME then
+      if cdsTerr.FieldByName('ParentISN').AsString = '' then
+        filterStr := ' and ParentIsn is null'
+      else
+//        filterStr := ' and ParentIsn = ' + cdsTerr.FieldByName('ParentISN').AsString
+        aObjIsn := cdsTerr.FieldByName('ParentISN').AsFloat
+    else if cdsTerr.FieldByName('ClassISN').AsFloat = TP_CTERYINSURANCE then
+      if (cdsTerr.FieldByName('ValName').AsString = '') then
+        filterStr := ' and ParentIsn is null'
+      else
+//        filterStr := ' and ParentIsn = ' +  cdsTerr.FieldByName('ISN').AsString;
+        aObjIsn := cdsTerr.FieldByName('ParentISN').AsFloat;
+                 }
     if cdsTerr.FieldByName('ClassISN').AsFloat = tp_CTERYINSNAME then
       aObjIsn := cdsTerr.FieldByName('ParentISN').AsFloat
-    else
-      aObjIsn := cdsTerr.FieldByName('Isn').AsFloat;
+    else if cdsTerr.FieldByName('ClassISN').AsFloat = TP_CTERYINSURANCE then
+      aObjIsn := cdsTerr.FieldByName('ISN').AsFloat;
 
-    if (cdsTerr.FieldByName('ValName').AsString = '') and (cdsTerr.FieldByName('ClassISN').AsFloat = TP_CTERYINSURANCE) then
-      filterStr := ' and ParentIsn is null'
-    else
-      filterStr := ' and ParentIsn = '+FloatToStr(aObjIsn);
+    if aObjIsn <> 0 then
+      FilterStr := ' and ParentISN = ' +FloatToStr(aObjIsn);
   end
   else
   begin
@@ -4594,8 +4700,8 @@ begin
    qrPreCalcParamObj.Filter := 'GROUPID =-1 and VisField = 1';
 //   cdsTerr.Filter := 'GROUPID = -10 and VisField = 1';
   end;
-{  if ((fMulti or vIsKotDKB) and (aObjIsn<>0) and (qrPreCalcHeadRuleISN.AsFloat <> p_AGRMOTORWIZARD)) then
-    qrPreCalcPrem.Filter := 'ParsentIsn='+FloatToStr(aObjIsn);}
+  if ((fMulti or vIsKotDKB) and (aObjIsn<>0) and (qrPreCalcHeadRuleISN.AsFloat <> p_AGRMOTORWIZARD)) then
+    qrPreCalcPrem.Filter := 'ParentIsn='+FloatToStr(aObjIsn);
 end;
 
 procedure TfmPreCalc.g_CascoObjMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
@@ -5598,22 +5704,26 @@ end;
 procedure TfmPreCalc.dsAgrAddDataChange(Sender: TObject; Field: TField);
 begin
   inherited;
-  with cdsVariant do
+  with qrVariant do
   begin
     Close;
     Params[0].Value:=cdsAgrAdd.FieldValues['ISN'];
     Open;
   end;
+  if cdsAgrAdd.FieldByName('ISN').AsFloat =   qrPreCalcHeadISN.AsFloat then
+    cdsAgrAdd.BeforeDelete := AbortAction;
+
 end;
 
 procedure TfmPreCalc.dsVariantDataChange(Sender: TObject; Field: TField);
 begin
   inherited;
-  with qrPreCalcParam do
-  begin
-    Close;
-    Open;
-  end;
+  if qrVariant.FieldByName('ISN').AsFloat =   qrPreCalcHeadISN.AsFloat then
+    qrVariant.BeforeDelete := AbortAction;
+  QueryRefresh(cdsTerr);
+  QueryRefresh(qrPreCalcParam);
+  QueryRefresh(qrPreCalcParam1);
+
 end;
 
 
@@ -5740,7 +5850,7 @@ begin
   result := -1;
   F:=TfmDlgTerr.CreateEx(Self, FIMain, FCon);
   try
-    F.AgrISN:=qrPreCalcParam.FieldByName('AgrISN').AsFloat;
+    F.AgrISN:= cdsTerr.FieldByName('ISN').AsFloat; //qrPreCalcParam.FieldByName('AgrISN').AsFloat;
     F.ShowModal;
     Update;
     if F.ModalResult<>mrOk then Abort;
@@ -5749,7 +5859,7 @@ begin
     begin
       result := f.fAddrIsn;
       AddrStr := f.vAddressStr;
-    end;  
+    end;
 
       //ShowMessage('ok');
   finally
@@ -5776,8 +5886,15 @@ begin
       i:=VarArrayHighBound(V, 1);
       for j:=0 to i do begin
         CheckDSEditMode(DataSource.DataSet);
-        DataSource.DataSet.FieldByName('Val').AsString:=V[j][0];
-        DataSource.DataSet.FieldByName('ValName').AsString:=V[j][4];
+        if j>0 then
+        DataSource.DataSet.Insert;
+        DataSource.DataSet.FieldByName('ClassISN').AsString:=V[j][0];
+        DataSource.DataSet.FieldByName('No').AsFloat := 0;
+        if cdsTerr.FieldByName('ClassISN').AsFloat = tp_CTERYINSNAME then
+          DataSource.DataSet.FieldByName('ParentISN').AsFloat := cdsTerr.FieldByName('ParentISN').AsFloat
+        else if cdsTerr.FieldByName('ClassISN').AsFloat = TP_CTERYINSURANCE then
+          DataSource.DataSet.FieldByName('ParentISN').AsFloat := cdsTerr.FieldByName('ISN').AsFloat;
+//        DataSource.DataSet.FieldByName('ValName').AsString:=V[j][4];
         DataSource.DataSet.Post;
         Param_ApplyUpdates;
       end;
@@ -5819,5 +5936,247 @@ begin
   end;
 end;
 
+procedure TfmPreCalc.dbgVariantColEnter(Sender: TObject);
+begin
+   inherited;
+//   qrPreCalcParam.ParamByName('pAgrISN').Value := TDBGrid(Sender).DataSource.DataSet.FieldByName('ISN').AsFloat;
+//   cdsTerr.Params[0].Value := TDBGrid(Sender).DataSource.DataSet.FieldByName('ISN').AsFloat;
+
+   QueryRefresh(cdsTerr);
+   QueryRefresh(qrPreCalcParam);
+   QueryRefresh(qrPreCalcParam1);
+   QueryRefresh(qrPreCalcPrem);
+end;
+
+procedure TfmPreCalc.dbgVariantCellClick(Column: TColumn);
+begin
+   inherited;
+{   qrPreCalcParam.ParamByName('pAgrISN').Value := qrVariant.FieldByName('ISN').AsFloat;
+   cdsTerr.Params[1].Value := qrVariant.FieldByName('ISN').AsFloat;}
+//   Param_ApplyUpdates;
+   QueryRefresh(cdsTerr);
+   QueryRefresh(qrPreCalcParam);
+   QueryRefresh(qrPreCalcParam1);
+   QueryRefresh(qrPreCalcPrem);
+end;
+
+
+procedure TfmPreCalc.cdsTerrBeforeGetRecords(Sender: TObject;
+  var OwnerData: OleVariant);
+begin
+  inherited;
+   if qrVariant.Active then
+    OwnerData:=VarArrayOf([User.ISN, User.SLabel, qrVariant.FieldByName('ISN').AsFloat])
+  else
+    OwnerData:=VarArrayOf([User.ISN, User.SLabel, qrPreCalcHeadISN.AsFloat]);
+end;
+
+procedure TfmPreCalc.qrVariantBeforeInsert(DataSet: TDataSet);
+begin
+  with cdsCreateVariant do begin
+    FetchParams ;
+    params.parambyname('pIsn').asfloat:= cdsAgrAdd.FieldByName('ISN').AsFloat;
+    execute;
+    FetchParams ;
+  end;
+{
+    dbgVariant.Columns[GetColIndex(dbgVariant, 'ISN')].ReadOnly := true;
+    dbgVariant.Columns[GetColIndex(dbgVariant, 'ISN')].ButtonStyle := cbsNone;
+ }
+end;
+
+procedure TfmPreCalc.dbgTerrColEnter(Sender: TObject);
+var pGrid: TDbGrid;
+begin
+  inherited;
+  pGrid := (Sender as TDbGrid);
+  with pGrid do
+  begin
+    if ((SelectedField.FieldName = 'VALNAME') and (DataSource.DataSet.FieldByName('ClassISN').AsFloat = TP_CTERYINSURANCE)) then
+    begin
+       Options:=Options+[dgEditing];
+       Columns[GetColIndex(dbgTerr, 'VALNAME')].ButtonStyle := cbsEllipsis;
+       Columns[GetColIndex(dbgTerr, 'VALNAME')].ReadOnly := false;
+    end
+    else
+    begin
+       Options:=Options-[dgEditing];
+       Columns[GetColIndex(dbgTerr, 'VALNAME')].ButtonStyle := cbsNone;
+       Columns[GetColIndex(dbgTerr, 'VALNAME')].ReadOnly := true;
+    end;
+
+  end;
+end;
+
+
+procedure TfmPreCalc.qrVariantBeforeApplyUpdates(Sender: TObject;
+  var OwnerData: OleVariant);
+begin
+  inherited;
+  if cdsAgrAdd.Active then
+    OwnerData:=VarArrayOf([User.ISN, User.SLabel, cdsAgrAdd.FieldByName('ISN').AsFloat])
+  else
+    OwnerData:=VarArrayOf([User.ISN, User.SLabel, qrPreCalcHeadISN.AsFloat]);
+
+end;
+
+procedure TfmPreCalc.qrVariantAfterInsert(DataSet: TDataSet);
+begin
+  inherited;
+//  DataSet.params.paramByName('XISN').AsFloat := cdsAgrAdd.FieldByName('ISN').AsFloat;
+//   qrVariant.Post;
+    qrVariant.ApplyUpdates(0);
+    QueryRefresh(cdsTerr);
+    QueryRefresh(qrPreCalcParam);
+    QueryRefresh(qrPreCalcParam1);
+
+end;
+
+procedure TfmPreCalc.cdsAgrAddBeforeGetRecords(Sender: TObject;
+  var OwnerData: OleVariant);
+begin
+  inherited;
+    OwnerData:=VarArrayOf([User.ISN, User.SLabel, qrPreCalcHeadISN.AsFloat]);
+    QueryRefresh(qrVariant);
+end;
+
+
+procedure TfmPreCalc.qrVariantAfterApplyUpdates(Sender: TObject;
+  var OwnerData: OleVariant);
+begin
+  inherited;
+  DSAfterApplyUpdates(Sender, OwnerData);
+end;
+
+procedure TfmPreCalc.cdsCreateVariantBeforeGetRecords(Sender: TObject;
+  var OwnerData: OleVariant);
+begin
+  inherited;
+  OwnerData:=VarArrayOf([User.ISN, User.SLabel,  cdsAgrAdd.FieldByName('ISN').AsFloat]) ;
+end;
+
+procedure TfmPreCalc.qrVariantNewRecord(DataSet: TDataSet);
+begin
+  inherited;
+    with cdsCreateVariant do begin
+//    FetchParams ;
+    params[0].asfloat:= cdsAgrAdd.FieldByName('ISN').AsFloat;
+    execute;
+//    FetchParams ;
+  end;
+  QueryRefresh(qrVariant);
+end;
+
+procedure TfmPreCalc.cdsAgrAddNewRecord(DataSet: TDataSet);
+begin
+  inherited;
+  with cdsCreateAdd do begin
+//    FetchParams ;
+    params[0].asfloat:= qrPreCalcHeadISN.AsFloat;
+    execute;
+//    FetchParams ;
+  end;
+  QueryRefresh(cdsAgrAdd);
+  QueryRefresh(qrVariant);
+end;
+
+procedure TfmPreCalc.cdsAgrAddAfterDelete(DataSet: TDataSet);
+begin
+  inherited;
+  DSAfterDelete(DataSet);
+  dbgDogAdd.OnCellClick(nil);
+end;
+
+procedure TfmPreCalc.qrVariantAfterDelete(DataSet: TDataSet);
+begin
+  inherited;
+  DSAfterDelete(DataSet);
+  dbgVariant.OnCellClick(nil);
+end;
+
+procedure TfmPreCalc.DeleteLinkRec(pName: String);
+begin
+  if pName = 'cdsAgrAdd' then
+  begin
+    with cdsDeleteAgrAdd do begin
+//    FetchParams ;
+    params[0].asfloat:= cdsAgrAdd.FieldByName('ISN').AsFloat;
+    execute;
+//    FetchParams ;
+    end;
+  end
+  else if pName ='qrVariant' then
+  begin
+    with cdsDeleteVariant do begin
+//    FetchParams ;
+    params[0].asfloat:= qrVariant.FieldByName('ISN').AsFloat;
+    execute;
+//    FetchParams ;
+    end;
+  end;
+
+  QueryRefresh(cdsAgrAdd);
+  QueryRefresh(qrVariant);
+end;
+
+procedure TfmPreCalc.cdsAgrAddBeforeDelete(DataSet: TDataSet);
+begin
+  inherited;
+  //if (DS = cdsAgrAdd) or (DS=qrVariant)  then begin
+    DeleteLinkRec(DataSet.Name); //DSAfterPost(DS); end;
+
+end;
+
+procedure TfmPreCalc.miCopyAllClick(Sender: TObject);
+var
+  vMenuItem: TMenuItem;
+begin
+  inherited;
+  Screen.Cursor := crHourGlass;
+  try
+
+    vMenuItem := TMenuItem(Sender);
+    if vMenuItem.tag = 1 then //add
+    begin
+      with cdsCopyAgrAdd do begin
+        params[0].asfloat:= cdsAgrAdd.FieldByName('ISN').AsFloat;
+        execute;
+      end;
+    end
+    else if vMenuItem.Tag = 2 then //precalc
+     begin
+       FCon.AppServer.CopyCalc(qrPreCalcHeadISN.AsFloat, NewIsn);
+       ShowMessage('Котировка скопирована успешно.');
+     end
+    else if vMenuItem.tag = 3 then //variant
+    begin
+      with cdsCopyVariant do begin
+        params[0].asfloat:= qrVariant.FieldByName('ISN').AsFloat;
+        params[1].asfloat:= cdsAgrAdd.FieldByName('ISN').AsFloat;
+        execute;
+      end;
+    end
+    else if vMenuItem.Tag = 4 then //terr
+    begin
+      with cdsCopyTerr do begin
+        if cdsTerr.FieldByName('ClassISN').AsFloat = tp_CTERYINSNAME then
+          params[0].asfloat:= cdsTerr.FieldByName('ParentISN').AsFloat
+        else if cdsTerr.FieldByName('ClassISN').AsFloat = TP_CTERYINSURANCE then
+          params[0].asfloat:= cdsTerr.FieldByName('ISN').AsFloat;
+        execute;
+      end;
+    end;
+    QueryRefresh(cdsAgrAdd);
+    QueryRefresh(qrVariant);
+    QueryRefresh(cdsTerr);
+    QueryRefresh(qrPreCalcParam);
+    QueryRefresh(qrPreCalcParam1);
+    QueryRefresh(qrPreCalcPrem);
+  finally
+    Screen.Cursor := crDefault;
+  end;
+end;
+
 end.
+
 

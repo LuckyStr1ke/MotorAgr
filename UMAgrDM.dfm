@@ -8,7 +8,7 @@ inherited MAgrDM: TMAgrDM
     BeforeLogOn = OraSessionBeforeLogOn
     Cursor = crIBeam
     LogonUsername = 'aislogin'
-    LogonPassword = ''
+    LogonPassword = 'qaz2edc'
     LogonDatabase = 'orasrv'
     Preferences.IntegerPrecision = 1
     Left = 12
@@ -3038,7 +3038,6 @@ inherited MAgrDM: TMAgrDM
   object spPreCalcParam: TOracleQuery
     SQL.Strings = (
       'BEGIN'
-      ''
       '  MAgrPCalc.UpdParam'
       ' ('
       '    :pEx,'
@@ -7234,11 +7233,20 @@ inherited MAgrDM: TMAgrDM
   end
   object dspAgrAdd: TDataSetProvider
     DataSet = qrAgrAdd
+    ResolveToDataSet = True
+    UpdateMode = upWhereKeyOnly
+    BeforeApplyUpdates = DSPSetParams
+    BeforeGetRecords = DSPSetParams
     Left = 1320
     Top = 240
   end
   object dspVariant: TDataSetProvider
-    DataSet = qrVariant
+    DataSet = qrVariantNew
+    ResolveToDataSet = True
+    UpdateMode = upWhereKeyOnly
+    BeforeApplyUpdates = dspVariantBeforeApplyUpdates
+    AfterApplyUpdates = dspVariantAfterApplyUpdates
+    BeforeGetRecords = DSPSetParams
     Left = 1376
     Top = 240
   end
@@ -7251,27 +7259,33 @@ inherited MAgrDM: TMAgrDM
     SQL.Strings = (
       'select '#39#1044#39' dog, ID, ISN from Agreement where ISN=:XISN'
       'UNION'
-      'SELECT '#39#1040#1076#1076' '#39'||rownum/*A.NO*/ dog,  ID, A.ISN '
+      'SELECT '#39#1040#1076#1076' '#39'||rownum as dog,  ID, ISN '
+      'from (select A.ID, A.ISN '
       'FROM Agreement A, Agrlink L'
-      
-        'WHERE  A.ISN=L.AGRISN2 and L.CLASSISN=6943015103/*'#1076#1086#1075#1086#1074#1086#1088'-'#1072#1076#1076#1077#1085#1076 +
-        #1091#1084'*/  and L.AGRISN1=:XISN'
-      'order by 2')
+      'WHERE  A.ISN=L.AGRISN2 '
+      'and L.CLASSISN=6943015103/*'#1076#1086#1075#1086#1074#1086#1088'-'#1072#1076#1076#1077#1085#1076#1091#1084'*/  '
+      'and L.AGRISN1=:XISN'
+      'order by ISN)'
+      'Order by ISN')
     Optimize = False
     Session = OraSession
     Left = 1320
     Top = 352
   end
-  object qrVariant: TOracleDataSet
+  object qrVariantNew: TOracleDataSet
     SQL.Strings = (
-      'SELECT '#39#1042' '#39'|| rownum/*A.ID*/ ID, A.ISN '
+      'SELECT  to_char(rownum)/*A.ID*/ ID, ISN'
+      'FROM (select A.ISN '
       'FROM Agreement A, Agrlink L'
       
         'WHERE  A.ISN=L.AGRISN2 and L.CLASSISN=6943015603/*'#1076#1086#1075#1086#1074#1086#1088'-'#1074#1072#1088#1080#1072#1085 +
         #1090'*/  and L.AGRISN1=:XISN'
-      'order by 2')
+      'order by a.ISN)')
     Optimize = False
+    Variables.Data = {0300000001000000050000003A5849534E040000000000000000000000}
+    OnApplyRecord = DSUpdateRecord
     Session = OraSession
+    AfterOpen = DSAfterOpen
     Left = 1384
     Top = 360
   end
@@ -7388,5 +7402,172 @@ inherited MAgrDM: TMAgrDM
     Variables.Data = {0300000001000000040000003A504558050000000000000000000000}
     Left = 256
     Top = 278
+  end
+  object spVariant: TOracleQuery
+    SQL.Strings = (
+      'declare'
+      '  vNewISN number;'
+      'begin'
+      '  logevent('#39'~~~'#39','#39'pAgrIsn: '#39'||:Isn||chr(10));'
+      '  vNewISN  := MAGRPCALC.CreateVariant(:ISN);'
+      '  commit;'
+      'end;')
+    Session = OraSession
+    Optimize = False
+    Variables.Data = {0300000001000000040000003A49534E040000000000000000000000}
+    Left = 1320
+    Top = 352
+  end
+  object spCreateVariant: TOracleDataSet
+    SQL.Strings = (
+      'declare'
+      'vNewISN number;'
+      'BEGIN'
+      '  vNewIsn := MAGRPCALC.CreateVariant(:PIsn);'
+      '  COMMIT;'
+      'END;')
+    Optimize = False
+    Variables.Data = {0300000001000000050000003A5049534E040000000000000000000000}
+    OracleDictionary.RequiredFields = False
+    Session = OraSession
+    Left = 277
+    Top = 788
+  end
+  object dspCreateVariant: TDataSetProvider
+    DataSet = spCreateVariant
+    BeforeApplyUpdates = DSPSetParams
+    BeforeGetParams = DSPSetParams
+    Left = 1246
+    Top = 328
+  end
+  object dspCreateAdd: TDataSetProvider
+    DataSet = spCreateAdd
+    BeforeApplyUpdates = DSPSetParams
+    BeforeGetParams = DSPSetParams
+    Left = 1246
+    Top = 328
+  end
+  object spCreateAdd: TOracleDataSet
+    SQL.Strings = (
+      'declare'
+      'vNewISN number;'
+      'BEGIN'
+      '  vNewIsn := MAGRPCALC.fAddendumAdd(:PIsn);'
+      '  COMMIT;'
+      'END;')
+    Optimize = False
+    Variables.Data = {0300000001000000050000003A5049534E040000000000000000000000}
+    OracleDictionary.RequiredFields = False
+    Session = OraSession
+    Left = 277
+    Top = 788
+  end
+  object dspDeleteVariant: TDataSetProvider
+    DataSet = spDeleteVariant
+    BeforeApplyUpdates = DSPSetParams
+    BeforeGetParams = DSPSetParams
+    Left = 1246
+    Top = 328
+  end
+  object spDeleteVariant: TOracleDataSet
+    SQL.Strings = (
+      'BEGIN'
+      '  MAGRPCALC.DeleteVariant(:PIsn);'
+      '  COMMIT;'
+      'END;')
+    Optimize = False
+    Variables.Data = {0300000001000000050000003A5049534E040000000000000000000000}
+    OracleDictionary.RequiredFields = False
+    Session = OraSession
+    Left = 277
+    Top = 788
+  end
+  object dspDeleteAgrAdd: TDataSetProvider
+    DataSet = spDeleteAgrAdd
+    BeforeApplyUpdates = DSPSetParams
+    BeforeGetParams = DSPSetParams
+    Left = 1246
+    Top = 328
+  end
+  object spDeleteAgrAdd: TOracleDataSet
+    SQL.Strings = (
+      'BEGIN'
+      '  MAGRPCALC.DeleteAgrAdd(:PIsn);'
+      '  COMMIT;'
+      'END;')
+    Optimize = False
+    Variables.Data = {0300000001000000050000003A5049534E040000000000000000000000}
+    OracleDictionary.RequiredFields = False
+    Session = OraSession
+    Left = 277
+    Top = 788
+  end
+  object dspCopyAgrAdd: TDataSetProvider
+    DataSet = spCopyAgrAdd
+    BeforeApplyUpdates = DSPSetParams
+    BeforeGetParams = DSPSetParams
+    Left = 1246
+    Top = 328
+  end
+  object spCopyAgrAdd: TOracleDataSet
+    SQL.Strings = (
+      'declare'
+      'vNewISN number;'
+      'BEGIN'
+      '  vNewIsn := MAGRPCALC.fAddendumCopy(:PIsn);'
+      '  COMMIT;'
+      'END;')
+    Optimize = False
+    Variables.Data = {0300000001000000050000003A5049534E040000000000000000000000}
+    OracleDictionary.RequiredFields = False
+    Session = OraSession
+    Left = 277
+    Top = 788
+  end
+  object spCopyVariant: TOracleDataSet
+    SQL.Strings = (
+      'declare'
+      'vNewISN number;'
+      'BEGIN'
+      '  vNewIsn := MAGRPCALC.fVariantCopy(:PVarIsn, :pAddISN);'
+      '  COMMIT;'
+      'END;')
+    Optimize = False
+    Variables.Data = {
+      0300000002000000080000003A5056415249534E040000000000000000000000
+      080000003A5041444449534E040000000000000000000000}
+    OracleDictionary.RequiredFields = False
+    Session = OraSession
+    Left = 277
+    Top = 788
+  end
+  object dspCopyVariant: TDataSetProvider
+    DataSet = spCopyVariant
+    BeforeApplyUpdates = DSPSetParams
+    BeforeGetParams = DSPSetParams
+    Left = 1246
+    Top = 328
+  end
+  object dspCopyTerr: TDataSetProvider
+    DataSet = spCopyTerr
+    BeforeApplyUpdates = DSPSetParams
+    BeforeGetParams = DSPSetParams
+    Left = 1246
+    Top = 328
+  end
+  object spCopyTerr: TOracleDataSet
+    SQL.Strings = (
+      'declare'
+      'vNewISN number;'
+      'BEGIN'
+      '  vNewIsn := MAGRPCALC.fCopyTerr(:PIsn);'
+      '  COMMIT;'
+      'END;')
+    Optimize = False
+    Variables.Data = {0300000001000000050000003A5049534E040000000000000000000000}
+    OracleDictionary.RequiredFields = False
+    Session = OraSession
+    Left = 277
+    Top = 788
   end
 end

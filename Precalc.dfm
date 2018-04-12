@@ -1108,6 +1108,7 @@ inherited fmPreCalc: TfmPreCalc
               TitleFont.Height = -11
               TitleFont.Name = 'MS Sans Serif'
               TitleFont.Style = []
+              OnEnter = EnterControl
               Columns = <
                 item
                   Color = clInfoBk
@@ -1147,6 +1148,7 @@ inherited fmPreCalc: TfmPreCalc
               Height = 457
               Align = alClient
               DataSource = dsVariant
+              Options = [dgEditing, dgAlwaysShowEditor, dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgConfirmDelete, dgCancelOnExit]
               PopupMenu = pmCopyMenu
               TabOrder = 0
               TitleFont.Charset = RUSSIAN_CHARSET
@@ -1154,12 +1156,15 @@ inherited fmPreCalc: TfmPreCalc
               TitleFont.Height = -11
               TitleFont.Name = 'MS Sans Serif'
               TitleFont.Style = []
+              OnCellClick = dbgVariantCellClick
+              OnColEnter = dbgVariantColEnter
+              OnEnter = EnterControl
               Columns = <
                 item
+                  ButtonStyle = cbsNone
                   Color = clInfoBk
                   Expanded = False
                   FieldName = 'ID'
-                  ReadOnly = True
                   Title.Caption = #8470' '#1074#1077#1088#1089#1080#1080
                   Width = 70
                   Visible = True
@@ -1204,6 +1209,7 @@ inherited fmPreCalc: TfmPreCalc
               TitleFont.Name = 'MS Sans Serif'
               TitleFont.Style = []
               OnCellClick = dbgTerrCellClick
+              OnColEnter = dbgTerrColEnter
               OnDrawColumnCell = g_CascoDrawColumnCell
               OnDblClick = g_CascoDblClick
               OnEditButtonClick = dbgTerrEditButtonClick
@@ -2730,6 +2736,10 @@ inherited fmPreCalc: TfmPreCalc
       DisplayWidth = 10
       FieldName = 'Sort1'
     end
+    object qrPreCalcPremParentISN: TFloatField
+      DisplayWidth = 10
+      FieldName = 'ParentIsn'
+    end
   end
   object qrPreCalcParam: TClientDataSetN
     Aggregates = <>
@@ -3935,11 +3945,15 @@ inherited fmPreCalc: TfmPreCalc
         ParamType = ptInput
       end>
     ProviderName = 'dspAgrAdd'
-    ReadOnly = True
+    BeforeDelete = DSBeforeDelete
+    AfterDelete = cdsAgrAddAfterDelete
+    OnNewRecord = cdsAgrAddNewRecord
+    BeforeApplyUpdates = cdsAgrAddBeforeGetRecords
+    BeforeGetRecords = cdsAgrAddBeforeGetRecords
     Left = 53
     Top = 513
   end
-  object cdsVariant: TClientDataSet
+  object qrVariant: TClientDataSet
     Aggregates = <>
     Params = <
       item
@@ -3948,13 +3962,25 @@ inherited fmPreCalc: TfmPreCalc
         ParamType = ptInput
       end>
     ProviderName = 'dspVariant'
-    ReadOnly = True
+    BeforeInsert = qrVariantBeforeInsert
+    AfterPost = DSAfterPost
+    BeforeDelete = DSBeforeDelete
+    AfterDelete = qrVariantAfterDelete
+    OnNewRecord = qrVariantNewRecord
+    BeforeApplyUpdates = qrVariantBeforeApplyUpdates
+    BeforeGetRecords = qrVariantBeforeApplyUpdates
     Left = 141
     Top = 521
+    object qrVariantISN: TFloatField
+      FieldName = 'ISN'
+    end
+    object qrVariantID: TStringField
+      FieldName = 'ID'
+    end
   end
   object cdsTerr: TClientDataSet
     Aggregates = <>
-    Filter = 'GROUPID=-10 and VisField=1'
+    Filter = 'GROUPID = -10 and VisField=1'
     Filtered = True
     Params = <
       item
@@ -3978,9 +4004,9 @@ inherited fmPreCalc: TfmPreCalc
     AfterScroll = qrPreCalcParamAfterScroll
     AfterRefresh = qrPreCalcParamObjAfterRefresh
     OnReconcileError = DSReconcileError
-    BeforeApplyUpdates = qrPreCalcParamBeforeGetRecords
+    BeforeApplyUpdates = cdsTerrBeforeGetRecords
     AfterApplyUpdates = qrPreCalcParamAfterApplyUpdates
-    BeforeGetRecords = qrPreCalcParamBeforeGetRecords
+    BeforeGetRecords = cdsTerrBeforeGetRecords
     Left = 245
     Top = 529
     object cdsTerrPARNAME: TStringField
@@ -4124,10 +4150,23 @@ inherited fmPreCalc: TfmPreCalc
     Top = 449
   end
   object dsVariant: TDataSource
-    DataSet = cdsVariant
+    DataSet = qrVariant
     OnDataChange = dsVariantDataChange
     Left = 119
     Top = 441
+  end
+  object cdsCreateVariant: TClientDataSet
+    Aggregates = <>
+    Params = <
+      item
+        DataType = ftFloat
+        Name = 'pISN'
+        ParamType = ptUnknown
+      end>
+    ProviderName = 'dspCreateVariant'
+    BeforeGetRecords = cdsCreateVariantBeforeGetRecords
+    Left = 260
+    Top = 526
   end
   object qrPreCalcParamList: TClientDataSet
     Aggregates = <>
@@ -4158,20 +4197,113 @@ inherited fmPreCalc: TfmPreCalc
     object miCopyAs: TMenuItem
       Caption = #1050#1086#1087#1080#1088#1086#1074#1072#1090#1100' '#1082#1072#1082
       object miCopyAsPreCalc: TMenuItem
+        Tag = 2
         Caption = #1050#1086#1090#1080#1088#1086#1074#1082#1091
+        OnClick = miCopyAllClick
       end
       object miCopyAsAdd: TMenuItem
+        Tag = 1
         Caption = #1040#1076#1076#1077#1085#1076#1091#1084
+        OnClick = miCopyAllClick
       end
       object miCopyAsVar: TMenuItem
+        Tag = 3
         Caption = #1042#1077#1088#1089#1080#1102
+        OnClick = miCopyAllClick
       end
       object miCopyAsTerr: TMenuItem
+        Tag = 4
         Caption = #1058#1077#1088#1088#1080#1090#1086#1088#1080#1102
+        OnClick = miCopyAllClick
       end
     end
     object miCopyAll: TMenuItem
+      Tag = 1
       Caption = #1050#1086#1087#1080#1088#1086#1074#1072#1090#1100
+      OnClick = miCopyAllClick
     end
+  end
+  object cdsCreateAdd: TClientDataSet
+    Aggregates = <>
+    Params = <
+      item
+        DataType = ftFloat
+        Name = 'pISN'
+        ParamType = ptUnknown
+      end>
+    ProviderName = 'dspCreateAdd'
+    BeforeGetRecords = cdsCreateVariantBeforeGetRecords
+    Left = 260
+    Top = 526
+  end
+  object cdsDeleteAgrAdd: TClientDataSet
+    Aggregates = <>
+    Params = <
+      item
+        DataType = ftFloat
+        Name = 'pISN'
+        ParamType = ptUnknown
+      end>
+    ProviderName = 'dspDeleteAgrAdd'
+    BeforeGetRecords = cdsCreateVariantBeforeGetRecords
+    Left = 260
+    Top = 526
+  end
+  object cdsDeleteVariant: TClientDataSet
+    Aggregates = <>
+    Params = <
+      item
+        DataType = ftFloat
+        Name = 'pISN'
+        ParamType = ptUnknown
+      end>
+    ProviderName = 'dspDeleteVariant'
+    BeforeGetRecords = cdsCreateVariantBeforeGetRecords
+    Left = 260
+    Top = 526
+  end
+  object cdsCopyVariant: TClientDataSet
+    Aggregates = <>
+    Params = <
+      item
+        DataType = ftFloat
+        Name = 'pVarIsn'
+        ParamType = ptUnknown
+      end
+      item
+        DataType = ftFloat
+        Name = 'pAddIsn'
+        ParamType = ptUnknown
+      end>
+    ProviderName = 'dspCopyVariant'
+    BeforeGetRecords = cdsCreateVariantBeforeGetRecords
+    Left = 260
+    Top = 526
+  end
+  object cdsCopyAgrAdd: TClientDataSet
+    Aggregates = <>
+    Params = <
+      item
+        DataType = ftFloat
+        Name = 'pISN'
+        ParamType = ptUnknown
+      end>
+    ProviderName = 'dspCopyAgrAdd'
+    BeforeGetRecords = cdsCreateVariantBeforeGetRecords
+    Left = 260
+    Top = 526
+  end
+  object cdsCopyTerr: TClientDataSet
+    Aggregates = <>
+    Params = <
+      item
+        DataType = ftFloat
+        Name = 'pISN'
+        ParamType = ptUnknown
+      end>
+    ProviderName = 'dspCopyTerr'
+    BeforeGetRecords = cdsCreateVariantBeforeGetRecords
+    Left = 260
+    Top = 526
   end
 end

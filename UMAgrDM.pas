@@ -490,9 +490,24 @@ type
     dspVariant: TDataSetProvider;
     dspTerr: TDataSetProvider;
     qrAgrAdd: TOracleDataSet;
-    qrVariant: TOracleDataSet;
+    qrVariantNew: TOracleDataSet;
     odsTerr: TOracleDataSet;
     spLoadXMLDataToCalc: TOracleQuery;
+    spVariant: TOracleQuery;
+    spCreateVariant: TOracleDataSet;
+    dspCreateVariant: TDataSetProvider;
+    dspCreateAdd: TDataSetProvider;
+    spCreateAdd: TOracleDataSet;
+    dspDeleteVariant: TDataSetProvider;
+    spDeleteVariant: TOracleDataSet;
+    dspDeleteAgrAdd: TDataSetProvider;
+    spDeleteAgrAdd: TOracleDataSet;
+    dspCopyAgrAdd: TDataSetProvider;
+    spCopyAgrAdd: TOracleDataSet;
+    spCopyVariant: TOracleDataSet;
+    dspCopyVariant: TDataSetProvider;
+    dspCopyTerr: TDataSetProvider;
+    spCopyTerr: TOracleDataSet;
 //
 //
     procedure dspCarAfterApplyUpdates(Sender: TObject;
@@ -554,6 +569,13 @@ type
       var OwnerData: OleVariant);
     procedure dspAgrCondsBeforeGetRecords(Sender: TObject;
       var OwnerData: OleVariant);
+    procedure qrVariantApplyRecord(Sender: TOracleDataSet; Action: Char;
+      var Applied: Boolean; var NewRowId: String);
+    procedure dspVariantBeforeApplyUpdates(Sender: TObject;
+      var OwnerData: OleVariant);
+    procedure dspVariantAfterApplyUpdates(Sender: TObject;
+      var OwnerData: OleVariant);
+
 
   private
     FObjData: TObjData;
@@ -3041,6 +3063,41 @@ begin
   end;
 end;
 
+
+
+procedure TMAgrDM.qrVariantApplyRecord(Sender: TOracleDataSet;
+  Action: Char; var Applied: Boolean; var NewRowId: String);
+begin
+  inherited;
+
+  DSUpdateRecord(Sender, Action, Applied, NewRowID);
+end;
+
+procedure TMAgrDM.dspVariantBeforeApplyUpdates(Sender: TObject;
+  var OwnerData: OleVariant);
+begin
+ DSPSetParams(Sender, OwnerData);
+ Debug_CurrProcName:='dspVariantBeforeApplyUpdates';
+// специальна€ обработка: дополнительные параметры, не вход€щие в картеж
+ if VarArrayHighBound(OwnerData,1)>2 then
+  spVariant.SetVariable('ISN', OwnerData[3]);
+end;
+
+procedure TMAgrDM.dspVariantAfterApplyUpdates(Sender: TObject;
+  var OwnerData: OleVariant);
+begin
+  inherited;
+  Debug_CurrProcName:='dspVariantAfterApplyUpdates';
+ // DSPAfterApplyUpdates(Sender, OwnerData);
+ //if VarIsNull(OwnerData) then
+ //  OwnerData:=VarArrayOf([Integer(1), spSubj.ParamByName('pISN').AsFloat]);
+ // передача на клиента нового ISN-а после создани€ записи
+ with spVariant do
+  begin
+   if VariableIndex('ISN')=-1 then DeclareVariable('ISN', otFloat); // борьба с ошибкой "Unknown variable ISN"
+   OwnerData:=VarArrayOf([Integer(1), GetVariable('ISN')]);
+  end;
+end;
 
 initialization
   fClassFactory := TROPooledClassFactory.Create('MAgrDM', Create_MAgrDM, TMAgrDM_Invoker, IniParams.LargePool, pbcreateAdditional,false);
